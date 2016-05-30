@@ -26,3 +26,7 @@
 *.exe
 *.out
 *.app
+/fllc/Debug
+/ipch/FLLC-3480ce42
+/fllc.VC.db
+/fllc.VC.VC.opendb
