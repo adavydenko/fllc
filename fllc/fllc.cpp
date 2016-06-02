@@ -2,102 +2,74 @@
 //
 
 #include "stdafx.h"
-#include "structs.h"
 #include <fstream>
+#include <vector>
+
+#include "structs.h"
+#include "EngelsonFritzson.h"
 
 using namespace std;
 
 void printUsage(const char* cmd)
 {
-    printf("%s -sem|vb|ef -l <points number> -f <file name>\n -d1|-d2|-d3 [-print] [-save]", cmd);
-    printf("Example: %s -ef -l 4200 -f \"da1650_nir.txt\" -d3\n -print -save", cmd);
+    printf("%s -method -c|-d -l <points count> -file <file name> [-save]\n", cmd);
+    printf("-method          : defines compression algorithm, should be one of:\n", cmd);
+    printf("                   -ef - EngelsonFritzson\n", cmd);
+    printf("                   -sem - Separated Sign/Exponent/Mantissa\n", cmd);
+    printf("                   -vb - Vartical Bits technique (=vf)\n", cmd);
+    printf("-c (default), -d : defines whether file should be (c)ompressed of (d)ecompressed\n", cmd);
+    printf("-l <points count>: specifies number of floats stored in the file\n", cmd);
+    printf("-file <file name>: specifies file name with uncompressed (should contain text) or compressed data (should be binary)\n", cmd);
+    printf("[-save]          : optional, specified whether output data should be saved on disk or not\n", cmd);
+
+    printf("\nExample (of compression): fllc -ef -c -l 4200 -f \"da1650_nir.txt\" -save\n", cmd);
+    printf("Example (of decompression): fllc -ef -d -l 4200 -f \"da1650_nir.compressed\" -save\n", cmd);
 }
 
-/*
-VerticalFloat: ------------------------------------------------------
-
-
+//TODO: preallocate buffer for results
 _float* readFile(const char* fileName, int pointsCount)
 {
-//const char* fileName = "C:\\Users\\adavydenko\\Documents\\visual studio 2015\\Projects\\ConsoleApplication2\\Debug\\nir_sample.txt";
+    FILE *f;
+    errno_t err = fopen_s(&f, fileName, "r");
 
-FILE *f;
-errno_t err = fopen_s(&f, fileName, "r");
+    if (err)
+    {
+        return NULL;
+    }
 
-if (err)
+    _float* results = new _float[pointsCount];
+    int i = 0;
+    while (EOF != fscanf_s(f, "%f", &results[i].fvalue))
+    {
+        i++;
+    }
+
+    fclose(f);
+    return results;
+}
+
+//TODO: preallocate buffer for results
+vector<unsigned char>* readFile(const char* fileName)
 {
-return NULL;
+    FILE *f;
+    errno_t err = fopen_s(&f, fileName, "r");
+
+    if (err)
+    {
+        return NULL;
+    }
+
+    vector<unsigned char>* results = new vector<unsigned char>();
+    unsigned char buf;
+
+    while (EOF != (buf = (unsigned char)fgetc(f)))
+    {
+        results->push_back(*(new unsigned char(buf)));
+    }
+
+    fclose(f);
+    return results;
 }
-
-_float* results = new _float[pointsCount];
-int i = 0;
-while (EOF != fscanf_s(f, "%f", &results[i].fvalue))
-{
-i++;
-}
-
-fclose(f);
-return results;
-}
-
-*/
-
-/*
-
-ConsoleApplication2.cpp ---------------------------------------------
-
-_float* readFile(const char* fileName, int pointsCount)
-{
-//const char* fileName = "C:\\Users\\adavydenko\\Documents\\visual studio 2015\\Projects\\ConsoleApplication2\\Debug\\nir_sample.txt";
-
-FILE *f;
-if (fopen_s(&f, fileName, "r"))
-{
-return NULL;
-}
-
-_float* results = new _float[pointsCount];
-int i = 0;
-while (EOF != fscanf_s(f, "%f", &results[i].fvalue))
-{
-i++;
-}
-
-return results;
-}
-
-*/
-
-/*
-
-EF -----------------------------------------------------------------
-
-
-_float* readFile(const char* fileName, int pointsCount)
-{
-//const char* fileName = "C:\\Users\\adavydenko\\Documents\\visual studio 2015\\Projects\\ConsoleApplication2\\Debug\\nir_sample.txt";
-
-FILE *f;
-errno_t err = fopen_s(&f, fileName, "r");
-
-if (err)
-{
-return NULL;
-}
-
-_float* results = new _float[pointsCount];
-int i = 0;
-while (EOF != fscanf_s(f, "%f", &results[i].fvalue))
-{
-i++;
-}
-
-fclose(f);
-return results;
-}
-
-
-*/
 
 void PrintBinary(_float &f)
 {
@@ -187,70 +159,131 @@ void saveCompressed(const char* sourceFile, _int<2>* e, _int<4>* m, unsigned cha
     compressed.close();
 }
 
-void saveCompressed(const char* sourceFile, unsigned char* data, int count)
+void saveCompressed(const char* sourceFile, unsigned char* data, int count, const char* extension)
 {
-    char binaryFile[200];
+    char binaryFile[256];
     strncpy_s(binaryFile, strlen(sourceFile) + 1, sourceFile, _TRUNCATE);
-    strncat_s(binaryFile, sizeof binaryFile, ".ef.compressed", _TRUNCATE);
+    strncat_s(binaryFile, sizeof binaryFile, extension, _TRUNCATE);
 
     cout << "Writing " << binaryFile << endl;
 
     ofstream compressed(binaryFile, ofstream::binary);
     compressed.write((const char*)data, count); //1 bytes=chars per float sign
     compressed.close();
-
-    /*
-    FILE *compressed;
-    errno_t err = fopen_s(&compressed, binaryFile, "w+");
-
-    if (err)
-    {
-    return;
-    }
-
-    fwrite(data, 1, count, compressed);
-    fclose(compressed);
-    */
 }
 
-int main()
+int main(int argc, char* argv[])
 {
+    int pointsCount;
+    char* sourceFile = NULL;
+    bool saveResults = false;
+    bool compress = true;
+
+    bool useEF = false;
+    bool useVB = false;
+    bool useSEM = false;
+
+    if (argc < 7)
+    {
+        printUsage(argv[0]);
+        return 0;
+    }
+
+    for (int i = 1; i < argc; i++) { /* We will iterate over argv[] to get the parameters stored inside.
+                                     * Note that we're starting on 1 because we don't need to know the
+                                     * path of the program, which is stored in argv[0] */
+
+
+                                     //if (i + 1 != argc) // Check that we haven't finished parsing already
+                                     //{
+        if (!strcmp(argv[i], "-c")) {
+            compress = true;
+        }
+        else if (!strcmp(argv[i], "-d")) {
+            compress = false;
+        }
+        else if (!strcmp(argv[i], "-ef")) {
+            useEF = true;
+        }
+        else if (!strcmp(argv[i], "-vb")) {
+            useVB = true;
+        }
+        else if (!strcmp(argv[i], "-sem")) {
+            useSEM = true;
+        }
+        else if (!strcmp(argv[i], "-l")) {
+            // We know the next argument *should* be the filename:
+            pointsCount = atoi(argv[++i]);
+        }
+        else if (!strcmp(argv[i], "-file")) {
+            sourceFile = argv[++i];
+        }
+        else if (!strcmp(argv[i], "-save"))
+        {
+            saveResults = true;
+        }
+        else {
+            std::cout << "Not enough or invalid arguments, please try again.\n";
+            printUsage(argv[0]);
+            return 0;
+        }
+    }
+
+    if (compress)
+    {
+        _float* nir = readFile(sourceFile, pointsCount);
+
+        if (saveResults)
+        {
+            saveBinary(sourceFile, nir, pointsCount);
+        }
+
+        if (useEF)
+        {
+            EngelsonFritzson zip;
+            zip.compress(nir, pointsCount);
+
+            int totalBlocks = 0;
+            unsigned int* data = zip.allocate(&totalBlocks);
+
+            saveCompressed(sourceFile, (unsigned char*)data, totalBlocks * 4, ".compressed.ef");
+            delete data;
+        }
+
+        delete nir;
+    }
+    else //we are decompressing data
+    {
+        vector<unsigned char>* zip = readFile(sourceFile);
+
+        if (useEF)
+        {
+            unsigned char* data = &(*zip)[0];
+            int size = zip->size() / 4; // unsigned char -> int
+
+            int* compressedDeltas = (int*)data;
+            _float* results = new _float[pointsCount];
+        }
+
+        if (useSEM)
+        {
+            _float* results = nullptr;
+        }
+
+        if (useVB)
+        {
+            _float* results = nullptr;
+
+        }
+
+        delete zip;
+
+    }
+
+
     //
     // VerticalFloat
 
-    //if (argc < 5)
-    //{
-    //	printUsage(argv[0]);
-    //	return 0;
-    //}
-    //
-    //int pointsCount;
-    //char* sourceFile = NULL;
-    //
-    //for (int i = 1; i < argc; i++) { /* We will iterate over argv[] to get the parameters stored inside.
-    //								 * Note that we're starting on 1 because we don't need to know the
-    //								 * path of the program, which is stored in argv[0] */
-    //
-    //
-    //								 //if (i + 1 != argc) // Check that we haven't finished parsing already
-    //								 //{
-    //	if (!strcmp(argv[i], "-l")) {
-    //		// We know the next argument *should* be the filename:
-    //		pointsCount = atoi(argv[++i]);
-    //	}
-    //	else if (!strcmp(argv[i], "-f")) {
-    //		sourceFile = argv[++i];
-    //	}
-    //	else {
-    //		std::cout << "Not enough or invalid arguments, please try again.\n";
-    //		printUsage(argv[0]);
-    //		return 0;
-    //	}
-    //	//}
-    //}
-    //
-    //_float* nir = readFile(sourceFile, pointsCount);
-    //
     //VerticalFloat zip;
     //zip.compress(nir, pointsCount);
     //
@@ -261,60 +294,13 @@ int main()
 
 
     // ------------------------------
-    //if (argc < 6)
-    //{
-    //	printUsage(argv[0]);
-    //	return 0;
-    //}
-    //
-    //int pointsCount;
-    //char* sourceFile = NULL;
     //bool d1 = false;
     //bool d2 = false;
     //bool d3 = false;
     //bool print = false;
     //bool saveResults = false;
     //
-    //for (int i = 1; i < argc; i++) { /* We will iterate over argv[] to get the parameters stored inside.
-    //								 * Note that we're starting on 1 because we don't need to know the
-    //								 * path of the program, which is stored in argv[0] */
-    //
-    //
-    //								 //if (i + 1 != argc) // Check that we haven't finished parsing already
-    //								 //{
-    //	if (!strcmp(argv[i], "-l")) {
-    //		// We know the next argument *should* be the filename:
-    //		pointsCount = atoi(argv[++i]);
-    //	}
-    //	else if (!strcmp(argv[i], "-f")) {
-    //		sourceFile = argv[++i];
-    //	}
-    //	else if (!strcmp(argv[i], "-d1")) {
-    //		d1 = true;
-    //	}
-    //	else if (!strcmp(argv[i], "-d2")) {
-    //		d1 = true;
-    //		d2 = true;
-    //	}
-    //	else if (!strcmp(argv[i], "-d3")) {
-    //		d1 = true;
-    //		d2 = true;
-    //		d3 = true;
-    //	}
-    //	else if (!strcmp(argv[i], "-print")) {
-    //		print = true;
-    //	}
-    //	else if (!strcmp(argv[i], "-save"))
-    //	{
-    //		saveResults = true;
-    //	}
-    //	else {
-    //		std::cout << "Not enough or invalid arguments, please try again.\n";
-    //		printUsage(argv[0]);
-    //		return 0;
-    //	}
-    //	//}
-    //}
+
     //
     //_float* nir = readFile(sourceFile, pointsCount);
     //
@@ -471,66 +457,6 @@ int main()
     //}
     //
     ////system("pause");
-
-    // ---------------------------------------------------
-    // EF
-    // ---------------------------------------------------
-    // for (size_t i = 0; i < 32; i++)
-    // {
-    // 	highLimits[i] = 1 << i; //<
-    // }
-    // 
-    // for (size_t i = 0; i < 32; i++)
-    // {
-    // 	lowLimits[i] = ~highLimits[i] + 1; //>
-    // }
-    // 
-    // 
-    // if (argc < 5)
-    // {
-    // 	printUsage(argv[0]);
-    // 	return 0;
-    // }
-    // 
-    // int pointsCount;
-    // char* sourceFile = NULL;
-    // 
-    // for (int i = 1; i < argc; i++) { /* We will iterate over argv[] to get the parameters stored inside.
-    // 								 * Note that we're starting on 1 because we don't need to know the
-    // 								 * path of the program, which is stored in argv[0] */
-    // 
-    // 
-    // 								 //if (i + 1 != argc) // Check that we haven't finished parsing already
-    // 								 //{
-    // 	if (!strcmp(argv[i], "-l")) {
-    // 		// We know the next argument *should* be the filename:
-    // 		pointsCount = atoi(argv[++i]);
-    // 	}
-    // 	else if (!strcmp(argv[i], "-f")) {
-    // 		sourceFile = argv[++i];
-    // 	}
-    // 	else {
-    // 		std::cout << "Not enough or invalid arguments, please try again.\n";
-    // 		printUsage(argv[0]);
-    // 		return 0;
-    // 	}
-    // 	//}
-    // }
-    // 
-    // _float* nir = readFile(sourceFile, pointsCount);
-    // 
-    // EngelsonFritzson zip;
-    // zip.compress(nir, pointsCount);
-    // 
-    // int totalBlocks = 0;
-    // unsigned int* data = zip.allocate(&totalBlocks);
-    // 
-    // saveBinary(sourceFile, nir, pointsCount);
-    // saveCompressed(sourceFile, (unsigned char*)data, totalBlocks * 4);
-    // 
-    // delete nir;
-    // delete data;
-
 
     return 0;
 }
