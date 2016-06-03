@@ -8,8 +8,9 @@ class EngelsonFritzson
     int usedBits;
     unsigned int* currentBlock;
 
-    void add(unsigned int data, int bitsToCopy);
-    void add(int value);
+    void write(unsigned int data, int bitsToCopy);
+    void write(int value);
+    unsigned int read(unsigned int * &data, int &lastPosition, int bitsToRead, bool fillNegative = false);
 
     void flush();
 
@@ -30,7 +31,7 @@ public:
 
     void compress(_float* arr, int count);
     unsigned int* allocate(int* count); //don't use unsigned chars, just to minimize allocation
-    _float* decompress(int* data, int count);
+    _float* decompress(unsigned int* data, int pointsCount);
 
 };
 

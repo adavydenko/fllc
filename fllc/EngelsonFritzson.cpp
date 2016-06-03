@@ -59,7 +59,7 @@ void EngelsonFritzson::compress(_float * nir, int count)
 
     for (int i = 0; i < count; i++)
     {
-        add(deltas[i]);
+        write(deltas[i]);
     }
 
     delete[] deltas;
@@ -83,11 +83,6 @@ unsigned int * EngelsonFritzson::allocate(int * bytesCount)
     return result;
 }
 
-_float * EngelsonFritzson::decompress(int * data, int count)
-{
-    return nullptr;
-}
-
 void EngelsonFritzson::flush()
 {
     if (currentBlock == nullptr)
@@ -106,7 +101,7 @@ void EngelsonFritzson::flush()
     usedBits = 0;
 }
 
-void EngelsonFritzson::add(unsigned int data, int bitsToCopy)
+void EngelsonFritzson::write(unsigned int data, int bitsToCopy)
 {
     if (!currentBlock)
     {
@@ -125,20 +120,79 @@ void EngelsonFritzson::add(unsigned int data, int bitsToCopy)
     else
     {
         unsigned int left = data >> (bitsToCopy - freeBits);
-        add(left, freeBits);
+        write(left, freeBits);
 
         data = (data << (32 + freeBits - bitsToCopy)) >> (32 + freeBits - bitsToCopy);
-        add(data, (bitsToCopy - freeBits));
+        write(data, (bitsToCopy - freeBits));
     }
 
     if (usedBits == 32)
         flush();
 }
 
-void EngelsonFritzson::add(int value)
+void EngelsonFritzson::write(int value)
 {
     int bitsToStore = meaningfulBits(value);
-    add(bitsToStore, bitsPerSize);
-    add(value, bitsToStore);
+    write(bitsToStore, bitsPerSize);
+    write(value, bitsToStore);
 }
 
+_float * EngelsonFritzson::decompress(unsigned int * data, int pointsCount)
+{
+    int* deltas = new int[pointsCount];
+
+    currentBlock = data;
+    int bitsRead = 0;
+
+    for (size_t i = 0; i < pointsCount; i++)
+    {
+        int nextValue = read(currentBlock, bitsRead, EngelsonFritzson::bitsPerSize);
+        deltas[i] = read(currentBlock, bitsRead, nextValue, true);
+    }
+
+    _float* values = new _float[pointsCount];
+
+    DeltasCalculator<int, 3> calculator;
+    calculator.getOriginal(deltas, pointsCount, (int *)values);
+
+    delete[] deltas;
+    return values;
+}
+
+unsigned int EngelsonFritzson::read(unsigned int * &data, int &lastPosition, int bitsToRead, bool fillNegative)
+{
+    if (!data)
+    {
+        throw "Data block is null, unabke to read.";
+    }
+
+    unsigned int value;
+    if (bitsToRead + lastPosition < 32)
+    {
+        value = *data; //current block on top
+        value <<= lastPosition;
+        value >>= (32 - bitsToRead);
+    }
+    else
+    {
+        value = *data;
+        value <<= lastPosition;
+        value >>= lastPosition - (32 - bitsToRead);
+
+        data++;
+        value |= *data >> (64 - bitsToRead - lastPosition);
+    }
+
+    lastPosition += bitsToRead;
+    if (lastPosition >= 32)
+    {
+        lastPosition -= 32;
+    }
+
+    if (fillNegative)
+    {
+
+    }
+
+    return value;
+}

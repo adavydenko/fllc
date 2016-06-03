@@ -8,8 +8,6 @@
 #include "structs.h"
 #include "EngelsonFritzson.h"
 
-using namespace std;
-
 void printUsage(const char* cmd)
 {
     printf("%s -method -c|-d -l <points count> -file <file name> [-save]\n", cmd);
@@ -49,7 +47,7 @@ _float* readFile(const char* fileName, int pointsCount)
 }
 
 //TODO: preallocate buffer for results
-vector<unsigned char>* readFile(const char* fileName)
+std::vector<unsigned char>* readFile(const char* fileName)
 {
     FILE *f;
     errno_t err = fopen_s(&f, fileName, "r");
@@ -59,10 +57,10 @@ vector<unsigned char>* readFile(const char* fileName)
         return NULL;
     }
 
-    vector<unsigned char>* results = new vector<unsigned char>();
+    std::vector<unsigned char>* results = new std::vector<unsigned char>();
     unsigned char buf;
 
-    while (EOF != (buf = (unsigned char)fgetc(f)))
+    while ((buf = (unsigned char)fgetc(f)) && !feof(f))
     {
         results->push_back(*(new unsigned char(buf)));
     }
@@ -71,12 +69,28 @@ vector<unsigned char>* readFile(const char* fileName)
     return results;
 }
 
+//TODO: preallocate buffer for results
+std::vector<char>* readEfFile(const char* fileName)
+{
+    std::ifstream file(fileName, std::ios::binary | std::ios::ate);
+    std::streamsize size = file.tellg();
+    file.seekg(0, std::ios::beg);
+
+    std::vector<char>* buffer = new std::vector<char>(size);
+    if (file.read(buffer->data(), size))
+    {
+        return buffer;
+    }
+
+    return nullptr;
+}
+
 void PrintBinary(_float &f)
 {
     for (int j = 0; j < 32; j++)
     {
         std::cout << f[31 - j];
-        if (j == 0 || j == 8) cout << " ";
+        if (j == 0 || j == 8) std::cout << " ";
     }
 }
 
@@ -136,7 +150,7 @@ void saveBinary(const char* sourceFile, _float* nir, int count)
     strncpy_s(binaryFile, strlen(sourceFile) + 1, sourceFile, _TRUNCATE);
     strncat_s(binaryFile, sizeof binaryFile, ".binary", _TRUNCATE);
 
-    ofstream binary(binaryFile, ofstream::binary);
+    std::ofstream binary(binaryFile, std::ofstream::binary);
     binary.write((const char*)nir, 4 * count); //4 bytes=chars per int
 
     binary.close();
@@ -148,7 +162,7 @@ void saveCompressed(const char* sourceFile, _int<2>* e, _int<4>* m, unsigned cha
     strncpy_s(binaryFile, strlen(sourceFile) + 1, sourceFile, _TRUNCATE);
     strncat_s(binaryFile, sizeof binaryFile, ".compressed", _TRUNCATE);
 
-    ofstream compressed(binaryFile, ofstream::binary);
+    std::ofstream compressed(binaryFile, std::ofstream::binary);
     compressed.write((const char*)ss, count); //1 bytes=chars per float sign
     compressed.write((const char*)se, count); //1 bytes=chars per exponent sign
     compressed.write((const char*)sm, count); //4 bytes=chars per mantissa sign
@@ -165,9 +179,9 @@ void saveCompressed(const char* sourceFile, unsigned char* data, int count, cons
     strncpy_s(binaryFile, strlen(sourceFile) + 1, sourceFile, _TRUNCATE);
     strncat_s(binaryFile, sizeof binaryFile, extension, _TRUNCATE);
 
-    cout << "Writing " << binaryFile << endl;
+    std::cout << "Writing " << binaryFile << std::endl;
 
-    ofstream compressed(binaryFile, ofstream::binary);
+    std::ofstream compressed(binaryFile, std::ofstream::binary);
     compressed.write((const char*)data, count); //1 bytes=chars per float sign
     compressed.close();
 }
@@ -254,15 +268,20 @@ int main(int argc, char* argv[])
     }
     else //we are decompressing data
     {
-        vector<unsigned char>* zip = readFile(sourceFile);
-
         if (useEF)
         {
-            unsigned char* data = &(*zip)[0];
+            std::vector<char>* zip = readEfFile(sourceFile);
+
+            unsigned char* data = (unsigned char*)zip->data(); // = &(*zip)[0]
             int size = zip->size() / 4; // unsigned char -> int
 
-            int* compressedDeltas = (int*)data;
-            _float* results = new _float[pointsCount];
+            EngelsonFritzson compressor;
+            _float* results = compressor.decompress((unsigned int*)zip->data(), pointsCount);
+
+            saveCompressed(sourceFile, (unsigned char*)results, pointsCount * 4, ".decompressed");
+
+            delete zip;
+            delete[] results;
         }
 
         if (useSEM)
@@ -275,9 +294,6 @@ int main(int argc, char* argv[])
             _float* results = nullptr;
 
         }
-
-        delete zip;
-
     }
 
 
