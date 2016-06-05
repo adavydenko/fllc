@@ -115,30 +115,146 @@ namespace tests
             }
         }
 
+        TEST_METHOD(Order1IntTest)
+        {
+            const int count = 8;
+
+            // TODO: Your test code here
+            int values[count] = { 100, 200, 250, 260, 405, 520, 521, 500 };
+            // d_0: 100  200  250  260  405  520 521  500
+            // d_1: 100 +100  +50  +10 +145 +115  +1  -21
+            int targetValues[count] = { +100, +100, +50, +10, +145, +115, +1, -21 };
+
+            int deltas[count];
+            DeltasCalculator<int, 1> calculator;
+            calculator.getDeltas(values, count, deltas);
+
+            for (size_t i = 0; i < count; i++)
+            {
+                Assert::AreEqual(targetValues[i], deltas[i], L"Invalid delta value.", LINE_INFO());
+            }
+
+            int restored[count];
+            calculator.getOriginal(deltas, count, restored);
+            for (size_t i = 0; i < count; i++)
+            {
+                Assert::AreEqual(values[i], restored[i], L"Invalid restored value.", LINE_INFO());
+            }
+        }
+
         TEST_METHOD(Order2IntTest)
         {
+            const int count = 8;
+
             // TODO: Your test code here
-            int values[5] = { 0, 1, 2, 3, 4 };
-            // d_0:|0  1  2  3  4 .. - initial array
-            // d_1: 0|+1 +1 +1 +1 .. - first value is unchanged for deltas of 1st order
-            // d_2: 0 +1| 0  0  0 .. - first and second values are kept from previous delta unchanged
+            int values[count] = { 100, 200, 250, 260, 405, 520, 521, 500 };
+            // d_0: 100  200  250  260  405  520  521  500
+            // d_1: 100 +100  +50  +10 +145 +115   +1  -21
+            // d_2: 100 +100  -50  -40 +135  -30 -114  -22
+            int targetValues[count] = { 100, +100, -50, -40, +135, -30, -114, -22 };
 
-            int deltas[5];
-
+            int deltas[count];
             DeltasCalculator<int, 2> calculator;
-            calculator.getDeltas(values, 5, deltas);
+            calculator.getDeltas(values, count, deltas);
 
+            for (size_t i = 0; i < count; i++)
+            {
+                Assert::AreEqual(targetValues[i], deltas[i], L"Invalid delta value.", LINE_INFO());
+            }
 
-            Assert::AreEqual(0, deltas[0], L"First value should be unchanged.", LINE_INFO());
-            Assert::AreEqual(1, deltas[1], L"Invalid delta value.", LINE_INFO());
-            Assert::AreEqual(1, deltas[1], L"Invalid delta value.", LINE_INFO());
-            Assert::AreEqual(1, deltas[1], L"Invalid delta value.", LINE_INFO());
-            Assert::AreEqual(1, deltas[1], L"Invalid delta value.", LINE_INFO());
+            int restored[count];
+            calculator.getOriginal(deltas, count, restored);
+            for (size_t i = 0; i < count; i++)
+            {
+                Assert::AreEqual(values[i], restored[i], L"Invalid restored value.", LINE_INFO());
+            }
+        }
 
+        TEST_METHOD(Order3IntTest)
+        {
+            const int count = 8;
 
-            int restored[5];
-            calculator.getOriginal(deltas, 5, restored);
-            for (size_t i = 0; i < 5; i++)
+            // TODO: Your test code here
+            int values[count] = { 100, 200, 250, 260, 405, 520, 521, 500 };
+            // d_0: 100  200  250  260  405  520  521  500
+            // d_1: 100 +100  +50  +10 +145 +115   +1  -21
+            // d_2: 100 +100  -50  -40 +135  -30 -114  -22
+            // d_3: 100 +100  -50  +10 +175 -165  -84  +92
+            int targetValues[count] = { 100, +100, -50, +10, +175, -165, -84, +92 };
+
+            int deltas[count];
+            DeltasCalculator<int, 3> calculator;
+            calculator.getDeltas(values, count, deltas);
+
+            for (size_t i = 0; i < count; i++)
+            {
+                Assert::AreEqual(targetValues[i], deltas[i], L"Invalid delta value.", LINE_INFO());
+            }
+
+            int restored[count];
+            calculator.getOriginal(deltas, count, restored);
+            for (size_t i = 0; i < count; i++)
+            {
+                Assert::AreEqual(values[i], restored[i], L"Invalid restored value.", LINE_INFO());
+            }
+        }
+
+        TEST_METHOD(Order4IntTest)
+        {
+            const int count = 8;
+
+            // TODO: Your test code here
+            int values[count] = { 100, 200, 250, 260, 405, 520, 521, 500 };
+            // d_0: 100  200  250  260  405  520  521  500
+            // d_1: 100 +100  +50  +10 +145 +115   +1  -21
+            // d_2: 100 +100  -50  -40 +135  -30 -114  -22
+            // d_3: 100 +100  -50  +10 +175 -165  -84  +92
+            // d_4: 100 +100  -50  +10 +165 -340  +81 +176
+            int targetValues[count] = { 100, +100, -50, +10, +165, -340, +81, +176 };
+
+            int deltas[count];
+            DeltasCalculator<int, 4> calculator;
+            calculator.getDeltas(values, count, deltas);
+
+            for (size_t i = 0; i < count; i++)
+            {
+                Assert::AreEqual(targetValues[i], deltas[i], L"Invalid delta value.", LINE_INFO());
+            }
+
+            int restored[count];
+            calculator.getOriginal(deltas, count, restored);
+            for (size_t i = 0; i < count; i++)
+            {
+                Assert::AreEqual(values[i], restored[i], L"Invalid restored value.", LINE_INFO());
+            }
+        }
+
+        TEST_METHOD(Order5IntTest)
+        {
+            const int count = 8;
+
+            // TODO: Your test code here
+            int values[count] = { 100, 200, 250, 260, 405, 520, 521, 500 };
+            // d_0: 100  200  250  260  405  520  521  500
+            // d_1: 100 +100  +50  +10 +145 +115   +1  -21
+            // d_2: 100 +100  -50  -40 +135  -30 -114  -22
+            // d_3: 100 +100  -50  +10 +175 -165  -84  +92
+            // d_4: 100 +100  -50  +10 +165 -340  +81 +176
+            // d_5: 100 +100  -50  +10 +165 -505 +421  +95
+            int targetValues[count] = { 100, +100, -50, +10, +165, -505, +421, +95 };
+
+            int deltas[count];
+            DeltasCalculator<int, 5> calculator;
+            calculator.getDeltas(values, count, deltas);
+
+            for (size_t i = 0; i < count; i++)
+            {
+                Assert::AreEqual(targetValues[i], deltas[i], L"Invalid delta value.", LINE_INFO());
+            }
+
+            int restored[count];
+            calculator.getOriginal(deltas, count, restored);
+            for (size_t i = 0; i < count; i++)
             {
                 Assert::AreEqual(values[i], restored[i], L"Invalid restored value.", LINE_INFO());
             }

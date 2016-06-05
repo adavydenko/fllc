@@ -141,13 +141,13 @@ _float * EngelsonFritzson::decompress(unsigned int * data, int pointsCount)
 {
     int* deltas = new int[pointsCount];
 
-    currentBlock = data;
+    unsigned int * block = data;
     int bitsRead = 0;
 
     for (size_t i = 0; i < pointsCount; i++)
     {
-        int nextValue = read(currentBlock, bitsRead, EngelsonFritzson::bitsPerSize);
-        deltas[i] = read(currentBlock, bitsRead, nextValue, true);
+        int nextValue = read(block, bitsRead, EngelsonFritzson::bitsPerSize);
+        deltas[i] = read(block, bitsRead, nextValue, true);
     }
 
     _float* values = new _float[pointsCount];
@@ -177,7 +177,7 @@ unsigned int EngelsonFritzson::read(unsigned int * &data, int &lastPosition, int
     {
         value = *data;
         value <<= lastPosition;
-        value >>= lastPosition - (32 - bitsToRead);
+        value >>= (32 - bitsToRead);
 
         data++;
         value |= *data >> (64 - bitsToRead - lastPosition);
@@ -191,7 +191,10 @@ unsigned int EngelsonFritzson::read(unsigned int * &data, int &lastPosition, int
 
     if (fillNegative)
     {
-
+        if ((value & (1 << bitsToRead - 1)) >> bitsToRead - 1)
+        {
+            value |= (-1 << bitsToRead);
+        }
     }
 
     return value;
