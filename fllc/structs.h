@@ -17,7 +17,7 @@ struct _byte {
 	*/
 };
 
-union byte {
+union _ubyte {
 	unsigned char _char;
 	_byte _byte;
 
@@ -42,7 +42,7 @@ union _float
 {
 	float fvalue;
 	unsigned int _value;
-	byte bytes[4];
+	_ubyte bytes[4];
 
 	const unsigned char &operator [] (int position)
 	{
@@ -89,7 +89,7 @@ template <int B>
 union _int
 {
 	unsigned int _value;
-	byte bytes[B];
+	_ubyte bytes[B];
 
 	const unsigned char &operator [] (int position)
 	{

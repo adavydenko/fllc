@@ -1,6 +1,8 @@
 #pragma once
 #include <vector>
 
+#define DELTA_ORDER 3
+
 class EngelsonFritzson
 {
     const int bitsPerSize = 5;

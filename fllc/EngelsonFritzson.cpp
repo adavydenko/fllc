@@ -54,7 +54,7 @@ void EngelsonFritzson::compress(_float * nir, int count)
     int* data = (int*)nir;
     int* deltas = new int[count];
 
-    DeltasCalculator<int, 3> calculator;
+    DeltasCalculator<int, DELTA_ORDER> calculator;
     calculator.getDeltas(data, count, deltas);
 
     for (int i = 0; i < count; i++)
@@ -152,7 +152,7 @@ _float * EngelsonFritzson::decompress(unsigned int * data, int pointsCount)
 
     _float* values = new _float[pointsCount];
 
-    DeltasCalculator<int, 3> calculator;
+    DeltasCalculator<int, DELTA_ORDER> calculator;
     calculator.getOriginal(deltas, pointsCount, (int *)values);
 
     delete[] deltas;
@@ -180,7 +180,7 @@ unsigned int EngelsonFritzson::read(unsigned int * &data, int &lastPosition, int
         value >>= (32 - bitsToRead);
 
         //data++;
-        value |= *(data+1) >> (64 - bitsToRead - lastPosition);
+        value |= *(data + 1) >> (64 - bitsToRead - lastPosition);
     }
 
     lastPosition += bitsToRead;

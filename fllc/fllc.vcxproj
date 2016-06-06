@@ -71,9 +71,13 @@
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <LinkIncremental>true</LinkIncremental>
+    <IncludePath>$(ProjectDir)\..\include;$(IncludePath)</IncludePath>
+    <LibraryPath>$(ProjectDir)\..\lib;$(LibraryPath)</LibraryPath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <LinkIncremental>true</LinkIncremental>
+    <IncludePath>..\include;$(IncludePath)</IncludePath>
+    <LibraryPath>..\lib;$(LibraryPath)</LibraryPath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <LinkIncremental>false</LinkIncremental>
@@ -147,6 +151,8 @@
     <Text Include="ReadMe.txt" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="..\include\zconf.h" />
+    <ClInclude Include="..\include\zlib.h" />
     <ClInclude Include="DeltasCalculator.h" />
     <ClInclude Include="EngelsonFritzson.h" />
     <ClInclude Include="SEMDeltas.h" />
@@ -155,6 +161,9 @@
     <ClInclude Include="targetver.h" />
     <ClInclude Include="VerticalBits.h" />
     <ClInclude Include="VerticalFloat.h" />
+    <ClInclude Include="zconf.h" />
+    <ClInclude Include="zlib.h" />
+    <ClInclude Include="ZlibWrapper.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="DeltasCalculator.cpp" />
@@ -169,6 +178,13 @@
     </ClCompile>
     <ClCompile Include="VerticalBits.cpp" />
     <ClCompile Include="VerticalFloat.cpp" />
+    <ClCompile Include="ZlibWrapper.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <Library Include="Debug\zdll.lib" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Debug\zlib.def" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

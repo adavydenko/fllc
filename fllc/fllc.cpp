@@ -7,6 +7,8 @@
 
 #include "structs.h"
 #include "EngelsonFritzson.h"
+#include "VerticalFloat.h"
+#include "SEMDeltas.h"
 
 void printUsage(const char* cmd)
 {
@@ -94,56 +96,6 @@ void PrintBinary(_float &f)
     }
 }
 
-//VB -----------------------------------------------------------
-//
-//void saveBinary(const char* sourceFile, _float* nir, int count)
-//{
-//char binaryFile[200];
-//strncpy_s(binaryFile, strlen(sourceFile) + 1, sourceFile, _TRUNCATE);
-//strncat_s(binaryFile, 200/*sizeof binaryFile*/, ".bin", _TRUNCATE);
-//
-//cout << "Writing " << binaryFile << endl;
-//
-//ofstream binary(binaryFile, ofstream::binary);
-//
-//binary.write((const char*)nir, 4 * count); //4 bytes=chars per int
-//binary.close();
-//}
-//
-//void saveVerticalBits(ofstream &out, VerticalBits &bits)
-//{
-//	int totalBlocks = 0;
-//	unsigned int* data = bits.allocate(&totalBlocks);
-//
-//	out.write((const char*)data, totalBlocks * 4); //1 bytes=chars per float sign
-//	delete data;
-//}
-//
-//void saveCompressed(const char* sourceFile, VerticalFloat &data)
-//{
-//	char binaryFile[200];
-//	strncpy_s(binaryFile, strlen(sourceFile) + 1, sourceFile, _TRUNCATE);
-//	strncat_s(binaryFile, sizeof binaryFile, ".vf.compressed", _TRUNCATE);
-//
-//	cout << "Writing " << binaryFile << endl;
-//
-//	ofstream compressed(binaryFile, ofstream::binary);
-//
-//	saveVerticalBits(compressed, data.sBits);
-//
-//	for (size_t i = 0; i < 8; i++)
-//	{
-//		saveVerticalBits(compressed, data.eBits[i]);
-//	}
-//
-//	for (size_t i = 0; i < 24; i++)
-//	{
-//		saveVerticalBits(compressed, data.mBits[i]);
-//	}
-//	compressed.close();
-//}
-
-
 void saveBinary(const char* sourceFile, _float* nir, int count)
 {
     char binaryFile[200];
@@ -156,24 +108,7 @@ void saveBinary(const char* sourceFile, _float* nir, int count)
     binary.close();
 }
 
-void saveCompressed(const char* sourceFile, _int<2>* e, _int<4>* m, unsigned char* ss, unsigned char* se, unsigned char* sm, int count)
-{
-    char binaryFile[200];
-    strncpy_s(binaryFile, strlen(sourceFile) + 1, sourceFile, _TRUNCATE);
-    strncat_s(binaryFile, sizeof binaryFile, ".compressed", _TRUNCATE);
-
-    std::ofstream compressed(binaryFile, std::ofstream::binary);
-    compressed.write((const char*)ss, count); //1 bytes=chars per float sign
-    compressed.write((const char*)se, count); //1 bytes=chars per exponent sign
-    compressed.write((const char*)sm, count); //4 bytes=chars per mantissa sign
-
-    compressed.write((const char*)e, 2 * count); //4 bytes=chars per int
-    compressed.write((const char*)m, 4 * count); //4 bytes=chars per int
-
-    compressed.close();
-}
-
-void saveCompressed(const char* sourceFile, unsigned char* data, int count, const char* extension)
+void saveCompressed(const char* sourceFile, const unsigned char* data, int count, const char* extension)
 {
     char binaryFile[256];
     strncpy_s(binaryFile, strlen(sourceFile) + 1, sourceFile, _TRUNCATE);
@@ -264,6 +199,29 @@ int main(int argc, char* argv[])
             delete data;
         }
 
+        if (useSEM)
+        {
+            SEMDeltas sem;
+            sem.compress(nir, pointsCount);
+
+            int size(0);
+            const unsigned char* data = sem.allocate(&size);
+
+            saveCompressed(sourceFile, data, size, ".compressed.sem");
+        }
+
+        if (useVB)
+        {
+            VerticalFloat zip;
+            zip.compress(nir, pointsCount);
+
+            int size(0);
+            unsigned char* data = zip.allocate(&size);
+            saveCompressed(sourceFile, data, size, ".compressed.vf");
+
+            delete[] data;
+        }
+
         delete nir;
     }
     else //we are decompressing data
@@ -295,184 +253,6 @@ int main(int argc, char* argv[])
 
         }
     }
-
-
-    //
-    // VerticalFloat
-
-    //VerticalFloat zip;
-    //zip.compress(nir, pointsCount);
-    //
-    //saveBinary(sourceFile, nir, pointsCount);
-    //saveCompressed(sourceFile, zip);
-
-    //delete nir;
-
-
-    // ------------------------------
-    //bool d1 = false;
-    //bool d2 = false;
-    //bool d3 = false;
-    //bool print = false;
-    //bool saveResults = false;
-    //
-
-    //
-    //_float* nir = readFile(sourceFile, pointsCount);
-    //
-    //_int<2>* earr = new _int<2>[pointsCount];
-    //_int<4>* marr = new _int<4>[pointsCount];
-    //unsigned char* ssign = new unsigned char[pointsCount];
-    //unsigned char* sexp = new unsigned char[pointsCount];
-    //unsigned char* smant = new unsigned char[pointsCount];
-    //_float* outfloats = new _float[pointsCount];
-    //
-    //int deltaE = 0;
-    //int ddeltaE = 0;
-    //int dddeltaE = 0;
-    //int deltaM = 0;
-    //int ddeltaM = 0;
-    //int dddeltaM = 0;
-    //
-    //int maxDeltaE = deltaE;
-    //int maxDDeltaE = ddeltaE;
-    //int maxDDDeltaE = dddeltaE;
-    //int maxDeltaM = deltaM;
-    //int maxDDeltaM = ddeltaM;
-    //int maxDDDeltaM = dddeltaM;
-    //
-    //for (int i = 0; i < pointsCount; i++)
-    //{
-    //	if (print)
-    //	{
-    //		printf("%*f = ", 10, nir[i].fvalue);    //13 symbols
-    //	}
-    //
-    //	int s = int(nir[i].S());
-    //	int e = int(nir[i].E());
-    //	int m = nir[i].M();
-    //
-    //	ssign[i] = (unsigned char)s;
-    //
-    //	if (print)
-    //	{
-    //		printf("%1d %*d %*d | ", s, 2, e, 8, m); //18 symbols
-    //		PrintBinary(nir[i]);                    //34 symbols
-    //	}
-    //
-    //	if (d1 && i > 0)
-    //	{
-    //		//ddeltaE = -deltaE; /*ddelta = deltaCurrent - deltaPrev(=deltaE)*/
-    //		//ddeltaE = -deltaM;
-    //
-    //		deltaE = e - (int)nir[i - 1].E();
-    //		deltaM = m - nir[i - 1].M();
-    //
-    //		if (abs(deltaE) > maxDeltaE) maxDeltaE = abs(deltaE);
-    //		if (abs(deltaM) > maxDeltaM) maxDeltaM = abs(deltaM);
-    //
-    //		earr[i].SetUnsigned(deltaE);
-    //		marr[i].SetUnsigned(deltaM);
-    //
-    //		if (deltaE < 0) sexp[i] = 0x1;
-    //		else sexp[i] = 0x0;
-    //
-    //		if (deltaM < 0) smant[i] = 0x1;
-    //		else smant[i] = 0x0;
-    //	}
-    //
-    //	if (d2 && i > 1)
-    //	{
-    //		//ddeltaE += deltaE; /*ddelta = deltaCurrent(=deltaE) - deltaPrev*/
-    //		//ddeltaM += deltaM;
-    //
-    //		ddeltaE = deltaE - ((int)nir[i - 1].E() - (int)nir[i - 2].E());
-    //		ddeltaM = deltaM - (nir[i - 1].M() - nir[i - 2].M());
-    //
-    //		if (abs(ddeltaE) > maxDDeltaE) maxDDeltaE = abs(ddeltaE);
-    //		if (abs(ddeltaM) > maxDDeltaM) maxDDeltaM = abs(ddeltaM);
-    //
-    //		earr[i].SetUnsigned(ddeltaE);
-    //		marr[i].SetUnsigned(ddeltaM);
-    //
-    //		if (ddeltaE < 0) sexp[i] = 0x1;
-    //		else sexp[i] = 0x0;
-    //
-    //		if (ddeltaM < 0) smant[i] = 0x1;
-    //		else smant[i] = 0x0;
-    //	}
-    //
-    //	if (d3 && i > 2)
-    //	{
-    //		//ddeltaE += deltaE; /*ddelta = deltaCurrent(=deltaE) - deltaPrev*/
-    //		//ddeltaM += deltaM;
-    //
-    //		int ddeltaE_1 = deltaE - ddeltaE - ((int)nir[i - 2].E() - (int)nir[i - 3].E());
-    //		int ddeltaM_1 = deltaM - ddeltaM - (nir[i - 2].M() - nir[i - 3].M());
-    //
-    //		dddeltaE = ddeltaE - ddeltaE_1;
-    //		dddeltaM = ddeltaM - ddeltaM_1;
-    //
-    //		if (abs(dddeltaE) > maxDDDeltaE) maxDDDeltaE = abs(dddeltaE);
-    //		if (abs(dddeltaM) > maxDDDeltaM) maxDDDeltaM = abs(dddeltaM);
-    //
-    //		earr[i].SetUnsigned(dddeltaE);
-    //		marr[i].SetUnsigned(dddeltaM);
-    //
-    //		if (dddeltaE < 0) sexp[i] = 0x1;
-    //		else sexp[i] = 0x0;
-    //
-    //		if (dddeltaM < 0) smant[i] = 0x1;
-    //		else smant[i] = 0x0;
-    //	}
-    //
-    //	if (print && d1)
-    //	{
-    //		printf("\n             %1d %+*d %+*d | ", s, 2, deltaE, 10, deltaM);
-    //		cout << s << " ";
-    //		earr[i].PrintBinary();
-    //		cout << " ";
-    //		marr[i].PrintBinary();
-    //		cout << " ";
-    //	}
-    //
-    //	if (print && d2)
-    //	{
-    //		printf("\n             %1d %+*d %+*d   |- ", s, 2, ddeltaE, 10, ddeltaM);
-    //		cout << s << " ";
-    //		earr[i].PrintBinary();
-    //		cout << " ";
-    //		marr[i].PrintBinary();
-    //		cout << " ";
-    //	}
-    //
-    //	if (print && d3)
-    //	{
-    //		printf("\n             %1d %+*d %+*d     |- ", s, 2, dddeltaE, 10, dddeltaM);
-    //		cout << s << " ";
-    //		earr[i].PrintBinary();
-    //		cout << " ";
-    //		marr[i].PrintBinary();
-    //		cout << " ";
-    //	}
-    //	//if (i>)
-    //
-    //	cout << endl;
-    //}
-    //
-    //if (saveResults)
-    //{
-    //	saveBinary(sourceFile, nir, pointsCount);
-    //	saveCompressed(sourceFile, earr, marr, ssign, sexp, smant, pointsCount);
-    //}
-    //
-    //if (print)
-    //{
-    //	printf("\n%+d %+d %+d | %+d %+d %+d", maxDeltaE, maxDDeltaE, maxDDDeltaE, maxDeltaM, maxDDeltaM, maxDDDeltaM);
-    //	cout << endl;
-    //}
-    //
-    ////system("pause");
 
     return 0;
 }
