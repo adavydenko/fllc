@@ -43,3 +43,4 @@
 /x64/Debug
 /Debug/fllc.pdb
 *.pdb
+/Debug/compare

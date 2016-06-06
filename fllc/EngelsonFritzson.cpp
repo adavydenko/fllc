@@ -167,7 +167,7 @@ unsigned int EngelsonFritzson::read(unsigned int * &data, int &lastPosition, int
     }
 
     unsigned int value;
-    if (bitsToRead + lastPosition < 32)
+    if (bitsToRead + lastPosition <= 32)
     {
         value = *data; //current block on top
         value <<= lastPosition;
@@ -179,14 +179,15 @@ unsigned int EngelsonFritzson::read(unsigned int * &data, int &lastPosition, int
         value <<= lastPosition;
         value >>= (32 - bitsToRead);
 
-        data++;
-        value |= *data >> (64 - bitsToRead - lastPosition);
+        //data++;
+        value |= *(data+1) >> (64 - bitsToRead - lastPosition);
     }
 
     lastPosition += bitsToRead;
     if (lastPosition >= 32)
     {
         lastPosition -= 32;
+        data++;
     }
 
     if (fillNegative)
