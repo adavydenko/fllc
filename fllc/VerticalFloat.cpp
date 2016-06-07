@@ -2,11 +2,12 @@
 //
 
 #include "stdafx.h"
+#include "DeltasCalculator.h"
 #include "VerticalFloat.h"
 #include "structs.h"
 #include <vector>
 #include "ZlibWrapper.h"
-#include "DeltasCalculator.h"
+
 
 void VerticalFloat::compress(_float * nir, int count)
 {
@@ -141,7 +142,7 @@ _float * VerticalFloat::decompress(unsigned char * data, int dataSize, int point
     int* e = new int[pointsCount]; // resulting exponent
     int* m = new int[pointsCount]; // resulting mantissa
 
-    DeltasCalculator<int, 3> calculator;
+    DeltasCalculator<int, DELTA_ORDER> calculator;
     calculator.getOriginal(eDeltas, pointsCount, e);
     calculator.getOriginal(mDeltas, pointsCount, m);
 
