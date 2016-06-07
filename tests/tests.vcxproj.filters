@@ -35,5 +35,16 @@
     <ClCompile Include="SEMDeltasTests.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="VerticalFloatTests.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <Library Include="zdll.lib" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="zlib.def">
+      <Filter>Source Files</Filter>
+    </None>
   </ItemGroup>
 </Project>

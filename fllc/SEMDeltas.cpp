@@ -10,6 +10,7 @@ SEMDeltas::SEMDeltas() : ssign(nullptr), sexp(nullptr), smant(nullptr), earr(nul
 
 SEMDeltas::~SEMDeltas()
 {
+    /*
     if (ssign)
     {
         delete[] ssign;
@@ -34,7 +35,7 @@ SEMDeltas::~SEMDeltas()
     {
         delete[] marr;
     }
-
+    */
     /*
     if (allocated)
     {
