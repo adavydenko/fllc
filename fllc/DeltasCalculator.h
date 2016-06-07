@@ -1,6 +1,6 @@
 #pragma once
 
-#define DELTA_ORDER 10
+#define DELTA_ORDER 3
 
 template <class T, int Order = DELTA_ORDER>
 class DeltasCalculator
