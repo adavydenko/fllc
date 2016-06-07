@@ -77,8 +77,8 @@ union _float
 		_value |= s;
 
 		_value <<= 8;
-		//_value |= (e + 127);
-		_value |= e;
+		_value |= (e + 127);
+		//_value |= e;
 
 		_value <<= 23;
 		_value |= m;

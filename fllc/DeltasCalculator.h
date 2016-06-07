@@ -1,5 +1,7 @@
 #pragma once
 
+#define DELTA_ORDER 3
+
 template <class T, int Order = 1>
 class DeltasCalculator
 {

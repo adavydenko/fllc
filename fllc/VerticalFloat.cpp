@@ -6,53 +6,40 @@
 #include "structs.h"
 #include <vector>
 #include "ZlibWrapper.h"
+#include "DeltasCalculator.h"
 
 void VerticalFloat::compress(_float * nir, int count)
 {
-    int deltaE = 0;
-    int ddeltaE = 0;
-    int dddeltaE = 0;
-    int deltaM = 0;
-    int ddeltaM = 0;
-    int dddeltaM = 0;
+    DeltasCalculator<int, DELTA_ORDER> calculator;
+
+    int* e = new int[count];
+    int* m = new int[count];
 
     for (int i = 0; i < count; i++)
     {
-        int s = int(nir[i].S());
-        int e = int(nir[i].E());
-        int m = nir[i].M();
+        e[i] = int(nir[i].E());
+        m[i] = nir[i].M();
+    }
 
-        if (i > 0)
+    int* eDelta = new int[count];
+    int* mDelta = new int[count];
+
+    calculator.getDeltas(e, count, eDelta);
+    calculator.getDeltas(m, count, mDelta);
+    for (int j = 0; j < count; j++)
+    {
+        char s = nir[j].S();
+
+        this->sBits.add(s);
+
+        for (size_t i = 0; i < 8; i++)
         {
-            deltaE = e - (int)nir[i - 1].E();
-            deltaM = m - nir[i - 1].M();
+            this->eBits[i].add(eDelta[j], i);
         }
 
-        if (i > 1)
+        for (size_t i = 0; i < 24; i++)
         {
-            ddeltaE = deltaE - ((int)nir[i - 1].E() - (int)nir[i - 2].E());
-            ddeltaM = deltaM - (nir[i - 1].M() - nir[i - 2].M());
-        }
-
-        if (i > 2)
-        {
-            int ddeltaE_1 = deltaE - ddeltaE - ((int)nir[i - 2].E() - (int)nir[i - 3].E());
-            int ddeltaM_1 = deltaM - ddeltaM - (nir[i - 2].M() - nir[i - 3].M());
-
-            dddeltaE = ddeltaE - ddeltaE_1;
-            dddeltaM = ddeltaM - ddeltaM_1;
-
-            this->sBits.add(s > 0);
-
-            for (size_t i = 0; i < 8; i++)
-            {
-                this->eBits[i].add(dddeltaE, i);
-            }
-
-            for (size_t i = 0; i < 24; i++)
-            {
-                this->mBits[i].add(dddeltaM, i);
-            }
+            this->mBits[i].add(mDelta[j], i);
         }
     }
 }
@@ -67,14 +54,14 @@ unsigned char * VerticalFloat::allocate(int * count)
     noncompressed.insert(noncompressed.end(),
         this->sBits.block.begin(), this->sBits.block.end());
 
-    for (size_t i = 0; i < 8; i++)
+    for (int i = 7; i >= 0; i--)
     {
         this->eBits[i].flush();
         noncompressed.insert(noncompressed.end(),
             this->eBits[i].block.begin(), this->eBits[i].block.end());
     }
 
-    for (size_t i = 0; i < 24; i++)
+    for (int i = 23; i >= 0; i--)
     {
         this->mBits[i].flush();
         noncompressed.insert(noncompressed.end(),
@@ -93,6 +80,87 @@ unsigned char * VerticalFloat::allocate(int * count)
 
     *count = nLenPacked;
     return buffer;
+}
+
+_float * VerticalFloat::decompress(unsigned char * data, int dataSize, int pointsCount)
+{
+    int blockSize = (pointsCount % 32 == 0) ? (pointsCount / 32) : (pointsCount / 32 + 1);
+    int targetSize = (1 + 8 + 24) * 4 * blockSize; // blockSize in ints
+    BYTE* unpacked = new BYTE[targetSize];
+
+    ZlibWrapper zip;
+    int nLen = zip.UncompressData(data, dataSize, unpacked, targetSize);
+
+    int* unpackedBits = (int*)unpacked;
+    int size = targetSize / 4; // char -> int
+
+    int* signBlock = unpackedBits;
+
+    int* eBlock = (unpackedBits + blockSize);
+    int eSize = blockSize * 8; // 8 - bits per 1 exponent
+    int* eDeltas = new int[pointsCount];
+
+    int* mBlock = (eBlock + eSize);
+    int mSize = blockSize * 24;
+    int* mDeltas = new int[pointsCount];
+
+    for (size_t i = 0; i < pointsCount; i++)
+    {
+        int blockNum = i / 32;
+        int bitNum = i % 32;
+
+        int eValue = 0;
+        int mValue = 0;
+
+        for (size_t e = 0; e < 8; e++)
+        {
+            unsigned int currentBlock = eBlock[e*blockSize + blockNum];
+            currentBlock &= (1 << (32 - bitNum - 1));
+            currentBlock >>= (32 - bitNum - 1);
+            currentBlock <<= e;
+
+            eValue |= currentBlock;
+        }
+
+        for (size_t m = 0; m < 24; m++)
+        {
+            unsigned int currentBlock = eBlock[m*blockSize + blockNum];
+            currentBlock &= (1 << (32 - bitNum - 1));
+            currentBlock >>= (32 - bitNum - 1);
+            currentBlock <<= m;
+
+            mValue |= currentBlock;
+        }
+
+        eDeltas[i] = eValue;
+        mDeltas[i] = mValue;
+    }
+
+    delete[] unpacked;
+
+    int* e = new int[pointsCount]; // resulting exponent
+    int* m = new int[pointsCount]; // resulting mantissa
+
+    DeltasCalculator<int, 3> calculator;
+    calculator.getOriginal(eDeltas, pointsCount, e);
+    calculator.getOriginal(mDeltas, pointsCount, m);
+
+    delete[] eDeltas;
+    delete[] mDeltas;
+
+    _float* result = new _float[pointsCount];
+    for (size_t i = 0; i < pointsCount; i++)
+    {
+        int blockNum = i / 32;
+        int bitNum = i % 32;
+        int shift = 32 - bitNum - 1; // start reading from left to right
+
+        char s = ((signBlock[blockNum] & (1 << shift)) >> shift);
+
+        result[i].FromSEM(s, e[i], m[i]);
+    }
+
+    return result;
 }
 
 /*

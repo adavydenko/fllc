@@ -72,7 +72,7 @@ std::vector<unsigned char>* readFile(const char* fileName)
 }
 
 //TODO: preallocate buffer for results
-std::vector<char>* readEfFile(const char* fileName)
+std::vector<char>* readEfFile(const char* fileName, int &count)
 {
     std::ifstream file(fileName, std::ios::binary | std::ios::ate);
     std::streamsize size = file.tellg();
@@ -83,6 +83,8 @@ std::vector<char>* readEfFile(const char* fileName)
     {
         return buffer;
     }
+
+    count = size;
 
     return nullptr;
 }
@@ -228,10 +230,8 @@ int main(int argc, char* argv[])
     {
         if (useEF)
         {
-            std::vector<char>* zip = readEfFile(sourceFile);
-
-            unsigned char* data = (unsigned char*)zip->data(); // = &(*zip)[0]
-            int size = zip->size() / 4; // unsigned char -> int
+            int size;
+            std::vector<char>* zip = readEfFile(sourceFile, size);
 
             EngelsonFritzson compressor;
             _float* results = compressor.decompress((unsigned int*)zip->data(), pointsCount);
@@ -244,13 +244,30 @@ int main(int argc, char* argv[])
 
         if (useSEM)
         {
-            _float* results = nullptr;
+            int size;
+            std::vector<char>* zip = readEfFile(sourceFile, size);
+
+            VerticalFloat compressor;
+            _float* results = compressor.decompress((unsigned char*)zip->data(), zip->size(), pointsCount);
+
+            saveCompressed(sourceFile, (unsigned char*)results, pointsCount * 4, ".decompressed");
+
+            delete zip;
+            delete[] results;
         }
 
         if (useVB)
         {
-            _float* results = nullptr;
+            int size;
+            std::vector<char>* zip = readEfFile(sourceFile, size);
 
+            VerticalFloat compressor;
+            _float* results = compressor.decompress((unsigned char*)zip->data(), size, pointsCount);
+
+            saveCompressed(sourceFile, (unsigned char*)results, pointsCount * 4, ".decompressed");
+
+            delete zip;
+            delete[] results;
         }
     }
 

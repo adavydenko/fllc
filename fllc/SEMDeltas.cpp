@@ -150,3 +150,97 @@ const unsigned char * SEMDeltas::allocate(int * size)
     *size = nLenPacked;
     return buffer;
 }
+
+_float * SEMDeltas::decompress(const unsigned char * data, int dataSize, int pointsCount)
+{
+    // unzipping ------------------------------
+    ZlibWrapper zip;
+
+    int targetLen = pointsCount * (1/*ssign*/ + 1/*sexp*/ + 1/*smant*/ + 2/*int<2>*/ + 4/*int<4>*/);
+    BYTE* unpacked = new BYTE[targetLen];
+
+    int nLen = zip.UncompressData((BYTE*)data, dataSize, unpacked, targetLen);
+
+    this->ssign = new unsigned char[pointsCount];
+    this->sexp = new unsigned char[pointsCount];
+    this->smant = new unsigned char[pointsCount];
+    this->earr = new _int<2>[pointsCount];
+    this->marr = new _int<4>[pointsCount];
+
+    // converting to deltas ------------------
+    size_t k = 0;
+    for (size_t i = 0; i < _count; i++, k++)
+    {
+        ssign[i] = unpacked[k];
+    }
+
+    for (size_t i = 0; i < _count; i++, k++)
+    {
+        sexp[i] = unpacked[k];
+    }
+
+    for (size_t i = 0; i < _count; i++, k++)
+    {
+        smant[i] = unpacked[k];
+    }
+
+    for (size_t i = 0; i < _count; i++, k++)
+    {
+        earr[i]._value = 0;
+        earr[i].bytes[0]._char = unpacked[k++];
+        earr[i].bytes[1]._char = unpacked[k];
+
+    }
+
+    for (size_t i = 0; i < _count; i++, k++)
+    {
+        marr[i]._value = 0;
+        marr[i].bytes[0]._char = unpacked[k++];
+        marr[i].bytes[1]._char = unpacked[k++];
+        marr[i].bytes[2]._char = unpacked[k++];
+        marr[i].bytes[3]._char = unpacked[k];
+    }
+
+    delete[] unpacked;
+
+    // from deltas to original ----------------
+    int* deltaE = new int[pointsCount];
+    int* deltaM = new int[pointsCount];
+
+    for (size_t i = 0; i < pointsCount; i++)
+    {
+        if (!sexp[i]) deltaE[i] = earr[i]._value;
+        else deltaE[i] = earr[i]._value * -1;
+
+        if (!smant[i]) deltaM[i] = marr[i]._value;
+        else deltaM[i] = marr[i]._value * -1;
+    }
+
+    delete[] sexp;
+    delete[] smant;
+    delete[] earr;
+    delete[] marr;
+
+    int* e = new int[pointsCount];
+    int* m = new int[pointsCount];
+
+    DeltasCalculator<int, DELTA_ORDER> calculator;
+    calculator.getOriginal(deltaE, pointsCount, e);
+    calculator.getOriginal(deltaM, pointsCount, m);
+
+    delete[] deltaE;
+    delete[] deltaM;
+
+    _float* values = new _float[pointsCount];
+
+    for (size_t i = 0; i < pointsCount; i++)
+    {
+        values[i].FromSEM(ssign[i], e[i], m[i]);
+    }
+
+    delete[] ssign;
+    delete[] e;
+    delete[] m;
+
+    return values;
+}

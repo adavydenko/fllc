@@ -3,8 +3,6 @@
 #include "structs.h"
 #include <vector>
 
-#define DELTA_ORDER 3
-
 class SEMDeltas
 {
     unsigned char* ssign;
@@ -24,5 +22,6 @@ public:
 
     void compress(_float* arr, int count);
     const unsigned char* allocate(int* size);
+    _float* decompress(const unsigned char* zip, int zipSize, int pointsCount);
 };
 

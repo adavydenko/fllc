@@ -32,5 +32,8 @@
     <ClCompile Include="EngelsonFritzsonTests.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="SEMDeltasTests.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
 </Project>

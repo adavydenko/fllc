@@ -14,12 +14,12 @@ VerticalBits::~VerticalBits()
 void VerticalBits::add(unsigned int data, int bitNum)
 {
     // before start
-    // 00000011.00000000.0000_X_000.01100000, bitNum = 11
+    // 00000011.00000000.0000_X_000.01100000, bitNum = 11 (starts with 0)
 
     data <<= (32 - bitNum - 1);
     // _X_0000110.00000000.00000000.0000.0000
 
-    data >>= (32 - bitNum);
+    data >>= (32 - 1);
     // 00000000.00000000.00000000.0000000_X_
 
     if (!currentBlock)
@@ -36,26 +36,6 @@ void VerticalBits::add(unsigned int data, int bitNum)
     if (usedBits == 32)
         flush();
 }
-
-/*void VerticalBits::add(unsigned char data, int bitNum)
-{
-    data <<= (8 - bitNum - 1);
-    data >>= (8 - bitNum);
-
-    if (!currentBlock)
-    {
-        currentBlock = new unsigned int(data);
-        usedBits++;
-        return;
-    }
-
-    *currentBlock <<= 1;
-    *currentBlock |= data;
-    usedBits++;
-
-    if (usedBits == 32)
-        flush();
-}*/
 
 void VerticalBits::add(bool data)
 {
