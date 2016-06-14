@@ -2,7 +2,7 @@
 #include "VerticalBits.h"
 #include <vector>
 
-template <int BitsCount, typedef T>
+template <int BitsCount, class T>
 class VerticalBitsWriter
 {
     VerticalBits bitContainer[BitsCount];
@@ -13,8 +13,5 @@ public:
     void write(T& value);
     std::vector<unsigned char>& allocate();
     T* read(unsigned char* input, int countT);
-
-    VerticalBitsWriter();
-    ~VerticalBitsWriter();
 };
 

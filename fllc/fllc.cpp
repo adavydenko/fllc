@@ -11,6 +11,7 @@
 #include "VerticalBits.h"
 #include "VerticalFloat.h"
 #include "SEMDeltas.h"
+#include "fllc.h"
 
 void printUsage(const char* cmd)
 {
@@ -276,3 +277,63 @@ int main(int argc, char* argv[])
     return 0;
 }
 
+extern unsigned int* __cdecl compressEF(_float* nir, int count, int* compressedSize)
+{
+    EngelsonFritzson ef;
+    ef.compress(nir, count);
+
+    int size;
+    unsigned int* zip = ef.allocate(&size);
+    *compressedSize = size;
+
+    return zip;
+}
+
+extern _float* __cdecl decompressEF(unsigned int* zip, int count)
+{
+    EngelsonFritzson compressor;
+    _float* results = compressor.decompress(zip, count);
+
+    return results;
+}
+
+extern unsigned char* __cdecl compressSEM(_float * nir, int count, int * compressedSize)
+{
+    SEMDeltas sem;
+    sem.compress(nir, count);
+
+    int size(0);
+    unsigned char* data = (unsigned char*)sem.allocate(&size);
+    *compressedSize = size;
+
+    return (unsigned char*)data;
+}
+
+extern int* __cdecl decompressSEM(const unsigned char * zip, int size, int count)
+{
+    SEMDeltas sd;
+    int* unpacked = (int*)sd.decompress(zip, size, count);
+
+    return unpacked;
+}
+
+extern unsigned char * compressVF(_float * nir, int count, int * compressedSize)
+{
+    VerticalFloat zip;
+    zip.compress(nir, count);
+
+    int size(0);
+    unsigned char* data = zip.allocate(&size);
+    *compressedSize = size;
+
+    return (unsigned char*)data;
+}
+
+extern unsigned char* decompressVF(unsigned char * zip, int size, int count)
+{
+    VerticalFloat vf;
+
+    int* unpacked = (int*)vf.decompress(zip, size, count);
+
+    return (unsigned char*)unpacked;
+}

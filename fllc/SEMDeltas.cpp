@@ -10,7 +10,7 @@ SEMDeltas::SEMDeltas() : ssign(nullptr), sexp(nullptr), smant(nullptr), earr(nul
 
 SEMDeltas::~SEMDeltas()
 {
-    /*
+
     if (ssign)
     {
         delete[] ssign;
@@ -35,7 +35,7 @@ SEMDeltas::~SEMDeltas()
     {
         delete[] marr;
     }
-    */
+
     /*
     if (allocated)
     {
@@ -237,6 +237,9 @@ _float * SEMDeltas::decompress(const unsigned char * data, int dataSize, int poi
     for (size_t i = 0; i < pointsCount; i++)
     {
         values[i].FromSEM(ssign[i], e[i], m[i]);
+
+        //!!!
+        values[i]._value ^= 127 << 23;
     }
 
     delete[] ssign;

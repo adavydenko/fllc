@@ -159,6 +159,8 @@ _float * VerticalFloat::decompress(unsigned char * data, int dataSize, int point
 
         result[i].FromSEM(s, e[i], m[i]);
     }
+    delete[] e;
+    delete[] m;
 
     return result;
 }
