@@ -8,7 +8,6 @@
 #include <vector>
 #include "ZlibWrapper.h"
 
-
 void VerticalFloat::compress(_float * nir, int count)
 {
     DeltasCalculator<int, DELTA_ORDER> calculator;

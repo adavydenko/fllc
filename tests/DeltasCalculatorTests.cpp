@@ -73,7 +73,7 @@ namespace tests
             int values[5] = { 0, 1, 2, 3, 4 };
             int deltas[5];
 
-            DeltasCalculator<int> calculator;
+            DeltasCalculator<int, 1> calculator;
             calculator.getDeltas(values, 5, deltas);
 
             for (size_t i = 0; i < 5; i++)
@@ -98,7 +98,7 @@ namespace tests
             float values[5] = { 0.00000f, 1.00000f, 1.10000f, 1.10001, 0.99999f };
             float deltas[5];
 
-            DeltasCalculator<float> calculator;
+            DeltasCalculator<float, 1> calculator;
             calculator.getDeltas(values, 5, deltas);
 
             Assert::AreEqual(0.00000f, deltas[0], 0.000001f, L"Invalid delta value.", LINE_INFO());

@@ -59,7 +59,7 @@ union _float
 
 	char E()
 	{
-		char result = (char)((_value << 1 /*erase sign 'S'*/) >> 24);
+		unsigned char result = (unsigned char)((_value << 1 /*erase sign 'S'*/) >> 24);
 
 		if (result == 0) return result;
 		return result - 127; //exponent is shifted + 127
