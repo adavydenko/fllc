@@ -12,6 +12,7 @@
 #include "VerticalFloat.h"
 #include "SEMDeltas.h"
 #include "fllc.h"
+#include "ZlibWrapper.h"
 
 void printUsage(const char* cmd)
 {
@@ -19,7 +20,8 @@ void printUsage(const char* cmd)
     printf("-method          : defines compression algorithm, should be one of:\n", cmd);
     printf("                   -ef - EngelsonFritzson\n", cmd);
     printf("                   -sem - Separated Sign/Exponent/Mantissa\n", cmd);
-    printf("                   -vb - Vartical Bits technique (=vf)\n", cmd);
+    printf("                   -vb - Vertical Bits technique (=vf)\n", cmd);
+    printf("                   -zip - just zipping data\n", cmd);
     printf("-c (default), -d : defines whether file should be (c)ompressed of (d)ecompressed\n", cmd);
     printf("-l <points count>: specifies number of floats stored in the file\n", cmd);
     printf("-file <file name>: specifies file name with uncompressed (should contain text) or compressed data (should be binary)\n", cmd);
@@ -136,6 +138,7 @@ int main(int argc, char* argv[])
     bool useEF = false;
     bool useVB = false;
     bool useSEM = false;
+    bool useZip = false;
 
     if (argc < 7)
     {
@@ -164,6 +167,9 @@ int main(int argc, char* argv[])
         }
         else if (!strcmp(argv[i], "-sem")) {
             useSEM = true;
+        }
+        else if (!strcmp(argv[i], "-zip")) {
+            useZip = true;
         }
         else if (!strcmp(argv[i], "-l")) {
             // We know the next argument *should* be the filename:
@@ -227,6 +233,20 @@ int main(int argc, char* argv[])
             delete[] data;
         }
 
+        if (useZip)
+        {
+            ZlibWrapper zip;
+
+            int nLenDst = zip.GetMaxCompressedLen(pointsCount * 4);
+            BYTE* buffer = new BYTE[nLenDst];  // alloc dest buffer
+
+            int nLenPacked = zip.CompressData((const BYTE*)nir, pointsCount * 4, buffer, nLenDst);
+            if (nLenPacked == -1) return 1;
+
+            saveCompressed(sourceFile, buffer, nLenPacked, ".zip");
+            delete[] buffer;
+        }
+
         delete nir;
     }
     else //we are decompressing data
@@ -271,6 +291,22 @@ int main(int argc, char* argv[])
 
             delete zip;
             delete[] results;
+        }
+
+        if (useZip)
+        {
+            int size;
+            int targetSize = pointsCount * 4;
+            BYTE* unpacked = new BYTE[targetSize];
+            std::vector<char>* zipped = readEfFile(sourceFile, size);
+
+            ZlibWrapper zip;
+            int nLen = zip.UncompressData((unsigned char*)zipped->data(), size, unpacked, targetSize);
+
+            saveCompressed(sourceFile, (unsigned char*)unpacked, targetSize, ".decompressed");
+
+            delete zipped;
+            delete[] unpacked;
         }
     }
 
@@ -335,5 +371,31 @@ extern unsigned char* decompressVF(unsigned char * zip, int size, int count)
 
     int* unpacked = (int*)vf.decompress(zip, size, count);
 
+    return (unsigned char*)unpacked;
+}
+
+extern unsigned char * zip(_float * nir, int count, int * compressedSize)
+{
+    ZlibWrapper zip;
+
+    int nLenDst = zip.GetMaxCompressedLen(count * 4);
+    BYTE* buffer = new BYTE[nLenDst];  // alloc dest buffer
+
+    int nLenPacked = zip.CompressData((const BYTE*)nir, count * 4, buffer, nLenDst);
+
+    if (nLenPacked == -1) return nullptr;
+    return (unsigned char*)buffer;
+}
+
+extern unsigned char* unzip(unsigned char * zipped, int size, int count)
+{
+    ZlibWrapper zip;
+
+    int targetSize = count * 4;
+    BYTE* unpacked = new BYTE[targetSize];
+
+    int nLen = zip.UncompressData(zipped, size, unpacked, targetSize);
+
+    if (nLen <= 0) return nullptr;
     return (unsigned char*)unpacked;
 }

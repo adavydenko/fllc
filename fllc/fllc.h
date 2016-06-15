@@ -10,4 +10,7 @@ extern "C" {
 
   __declspec(dllexport) unsigned char* __cdecl compressVF(_float* nir, int count, int* compressedSize);
   __declspec(dllexport) unsigned char* __cdecl decompressVF(unsigned char * zip, int size, int count);
+
+  __declspec(dllexport) unsigned char* __cdecl zip(_float* nir, int count, int* compressedSize);
+  __declspec(dllexport) unsigned char* __cdecl unzip(unsigned char * zip, int size, int count);
 }
