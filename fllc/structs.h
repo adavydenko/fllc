@@ -77,8 +77,9 @@ union _float
 		_value |= s;
 
 		_value <<= 8;
-		_value |= (e + 127);
-		//_value |= e;
+		if (e != 0)
+			_value |= (e + 127);
+		//else _value |= e; //no need since e==0
 
 		_value <<= 23;
 		_value |= m;

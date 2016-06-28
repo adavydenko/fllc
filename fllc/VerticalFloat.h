@@ -12,6 +12,7 @@ public:
 
     VerticalBitsWriter<1, char> signWriter;
     VerticalBitsWriter<8, int> exponentWriter;
+	VerticalBitsWriter<23, int> mantissaWriter;
 
     void compress(_float* arr, int count);
     unsigned char* allocate(int* count); //don't use unsigned chars, just to minimize allocation

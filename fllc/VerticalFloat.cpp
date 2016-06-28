@@ -26,6 +26,7 @@ void VerticalFloat::compress(_float * nir, int count)
 
     calculator.getDeltas(e, count, eDelta);
     calculator.getDeltas(m, count, mDelta);
+
     for (int j = 0; j < count; j++)
     {
         char s = nir[j].S();
