@@ -4,9 +4,10 @@
 #include "stdafx.h"
 #include "DeltasCalculator.h"
 #include "VerticalFloat.h"
-#include "structs.h"
+//#include "structs.h"
 #include <vector>
 #include "ZlibWrapper.h"
+//#include "VerticalBitsWriter.h"
 
 void VerticalFloat::compress(_float * nir, int count)
 {
@@ -30,19 +31,16 @@ void VerticalFloat::compress(_float * nir, int count)
     for (int j = 0; j < count; j++)
     {
         char s = nir[j].S();
-
-        this->sBits.add(s);
-
-        for (size_t i = 0; i < 8; i++)
-        {
-            this->eBits[i].add(eDelta[j], i);
-        }
-
-        for (size_t i = 0; i < 24; i++)
-        {
-            this->mBits[i].add(mDelta[j], i);
-        }
+        this->signWriter.write(s);
+        this->exponentWriter.write(eDelta[j]);
+        this->mantissaWriter.write(mDelta[j]);
     }
+
+    delete[] e;
+    delete[] m;
+
+    delete[] eDelta;
+    delete[] mDelta;
 }
 
 unsigned char * VerticalFloat::allocate(int * count)
@@ -51,23 +49,17 @@ unsigned char * VerticalFloat::allocate(int * count)
 
     std::vector<unsigned int> noncompressed;
 
-    this->sBits.flush();
+    std::vector<unsigned int> signs = signWriter.allocate();
     noncompressed.insert(noncompressed.end(),
-        this->sBits.block.begin(), this->sBits.block.end());
+        signs.begin(), signs.end());
 
-    for (int i = 7; i >= 0; i--)
-    {
-        this->eBits[i].flush();
-        noncompressed.insert(noncompressed.end(),
-            this->eBits[i].block.begin(), this->eBits[i].block.end());
-    }
+    std::vector<unsigned int> exponents = signWriter.allocate();
+    noncompressed.insert(noncompressed.end(),
+        exponents.begin(), exponents.end());
 
-    for (int i = 23; i >= 0; i--)
-    {
-        this->mBits[i].flush();
-        noncompressed.insert(noncompressed.end(),
-            this->mBits[i].block.begin(), this->mBits[i].block.end());
-    }
+    std::vector<unsigned int> mantissas = signWriter.allocate();
+    noncompressed.insert(noncompressed.end(),
+        mantissas.begin(), mantissas.end());
 
     int sizeInChars = noncompressed.size() * 4;
 

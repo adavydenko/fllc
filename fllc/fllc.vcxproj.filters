@@ -57,10 +57,10 @@
     <ClInclude Include="..\include\zlib.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="VerticalBitsWriter.h">
+    <ClInclude Include="fllc.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="fllc.h">
+    <ClInclude Include="VerticalBitsWriter.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
@@ -87,9 +87,6 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="ZlibWrapper.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="VerticalBitsWriter.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>

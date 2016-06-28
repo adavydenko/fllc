@@ -1,26 +1,19 @@
 #include "stdafx.h"
 #include "VerticalBits.h"
 
-
 VerticalBits::VerticalBits() : currentBlock(nullptr), usedBits(0)
-{
-}
-
-
-VerticalBits::~VerticalBits()
-{
-}
+{ }
 
 void VerticalBits::add(unsigned int data, int bitNum)
 {
     // before start
-    // 00000011.00000000.0000_X_000.01100000, bitNum = 11 (starts with 0)
+    // 00000011.00000000.0000X000.01100000, bitNum = 11 (starts with 0)
 
     data <<= (32 - bitNum - 1);
-    // _X_0000110.00000000.00000000.0000.0000
+    // X0000110.00000000.00000000.0000.0000
 
     data >>= (32 - 1);
-    // 00000000.00000000.00000000.0000000_X_
+    // 00000000.00000000.00000000.0000000X
 
     if (!currentBlock)
     {
