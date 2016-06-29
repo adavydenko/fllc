@@ -41,35 +41,36 @@ std::vector<unsigned int>& VerticalBitsWriter<BitsCount, T>::allocate()
 template<int BitsCount, class T>
 T * VerticalBitsWriter<BitsCount, T>::read(unsigned char * input, int len, int pointsCount)
 {
-    /*
-    int bitsPerBlock = (sizeof T) * 8;
-    int countBlocks = len % ((sizeof T) * 8) == 0
-        ? len / ((sizeof T) * 8)
-        : len / ((sizeof T) * 8) + 1;
+    //all sizes are in bits
+    int sectors = BitsCount;
+    int blockSize = sizeof(unsigned int) * 8;
+    int blocksInSector = len * 8 / (blockSize * sectors);
 
-    int targetSize =
+    int blocksInSector_verified = (pointsCount % blockSize == 0)
+        ? pointsCount / blockSize
+        : 1 + pointsCount / blockSize;
 
-    int* eBlock = (unpackedBits + blockSize);
-    int eSize = blockSize * 8; // 8 - bits per 1 exponent
-    int* eDeltas = new int[pointsCount];
-    */
+    if (blocksInSector != blocksInSector_verified)
+    {
+        throw std::invalid_argument("pointsCount");
+    }
 
-    /*
     T* results = new T[pointsCount];
+    unsigned int * blocks = (unsigned int*)input;
 
     for (size_t i = 0; i < pointsCount; i++)
     {
-        int blockNum = i / 32;
-        int bitNum = i % 32;
+        int blockNum = i / blockSize;
+        int bitNum = i % blockSize;
 
         T value = 0;
 
-        for (size_t j = 0; j < BitsCount; j++)
+        for (size_t sectorNum = 0; sectorNum < BitsCount; sectorNum++)
         {
-            unsigned int currentBlock = input[j*blockSize + blockNum];
+            unsigned int currentBlock = blocks[sectorNum*blocksInSector + blockNum];
             currentBlock &= (1 << (32 - bitNum - 1));
             currentBlock >>= (32 - bitNum - 1);
-            currentBlock <<= j;
+            currentBlock <<= sectorNum;
 
             value |= currentBlock;
         }
@@ -78,7 +79,4 @@ T * VerticalBitsWriter<BitsCount, T>::read(unsigned char * input, int len, int p
     }
 
     return results;
-    */
-
-    return nullptr;
 }
