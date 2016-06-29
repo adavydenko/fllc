@@ -258,7 +258,7 @@ namespace tests
         {
             // TODO: Your test code here
 
-            int source[] = { -1, 0, -1, 0, -1, 0, -1, 0, -1, 0, -1, 0, -1, 0, -1, 0 }; //-1: 11111111 11111111 11111111 11111111
+            const int source[] = { -1, 0, -1, 0, -1, 0, -1, 0, -1, 0, -1, 0, -1, 0, -1, 0 }; //-1: 11111111 11111111 11111111 11111111
             /*
                 1 2 3 4 5 6 7 8
                 _ _ _ _ _ _ _ _
@@ -274,18 +274,155 @@ namespace tests
             */
 
             VerticalBitsWriter<8, char> writer;
-            bool exceptionThrown = false;
 
-            try
+            auto func = [&] {writer.read((unsigned char*)source, 64 /* 16(#of ints) * 4(int size in chars) */, 32); };
+            Assert::ExpectException<std::invalid_argument>(
+                func,
+                L"Exception expected, becuase 16 ints is too much for 48 points of char.");
+
+        }
+
+        TEST_METHOD(EncodingDecodingTest)
+        {
+            // TODO: Your test code here
+
+            const char one = '\xFF';  // 11111111
+            const char zero = '\x00'; // 00000000
+            const char four = '\x0F'; // 00001111
+            const char five = '\x1F'; // 00011111
+            const char six = '\x3F'; //  00111111
+
+            char data[] = { one, zero, four, five };
+
+            VerticalBitsWriter<6 /*encode only 6 bits at right*/, char> writer;
+            for (size_t i = 0; i < 4 /*number of values to write*/; i++)
             {
-                writer.read((unsigned char*)source, 64 /* 16(#of ints) * 4(int size in chars) */, 32);
-            }
-            catch (const std::invalid_argument&)
-            {
-                exceptionThrown = true;
+                writer.write(data[i]);
+                /*
+
+                VerticalBits are alligned to ints, so it would have a form:
+
+                    1 2 | 3 4 5 6 7 8
+                    _ _ | _ _ _ _ _ _
+                V1: 1 1 | 1 1 1 1 1 1 //Values
+                V2: 0 0 | 0 0 0 0 0 0
+                V3: 0 0 | 0 0 1 1 1 1
+                V4: 0 0 | 0 1 1 1 1 1
+                    . . | . . . . . .
+                V32 0 0 | 0 0 0 0 0 0
+                ---------------------
+                   none | encoded values = 6
+                */
             }
 
-            Assert::IsTrue(exceptionThrown, L"Exception expected, becuase 16 ints is too much for 48 points of char.");
+            std::vector<unsigned int> result = writer.allocate();
+
+            Assert::AreEqual(6, (int)result.size(), L"Invalid target buffer length.", LINE_INFO());
+            /*
+            -2147483648: 10000000 00000000 00000000 00000000
+            -1879048192: 10010000 00000000 00000000 00000000
+            -1342177280: 10110000 00000000 00000000 00000000
+            */
+            Assert::AreEqual((int)-2147483648, (int)result[0], L"Wrong encoded value.", LINE_INFO());
+            Assert::AreEqual(-1879048192, (int)result[1], L"Wrong encoded value.", LINE_INFO());
+            Assert::AreEqual(-1342177280, (int)result[2], L"Wrong encoded value.", LINE_INFO());
+            Assert::AreEqual(-1342177280, (int)result[3], L"Wrong encoded value.", LINE_INFO());
+            Assert::AreEqual(-1342177280, (int)result[4], L"Wrong encoded value.", LINE_INFO());
+            Assert::AreEqual(-1342177280, (int)result[5], L"Wrong encoded value.", LINE_INFO());
+
+            // we coded lossy, so the resulting array should be different
+
+            VerticalBitsWriter<6 /*encode only 6 bits at right*/, char> reader;
+            char* decoded = reader.read((unsigned char*)result.data(), 6 * 4, 4);
+
+            Assert::AreEqual(one, decoded[0], L"Wrong decoded value.", LINE_INFO());
+            Assert::AreEqual(zero, decoded[1], L"Wrong decoded value.", LINE_INFO());
+            Assert::AreEqual(four, decoded[2], L"Wrong decoded value.", LINE_INFO());
+            Assert::AreEqual(five, decoded[3], L"Wrong decoded value.", LINE_INFO());
+
+            // just to test algorithm, since rest part are zeros, we can convert them to zeros as well
+            VerticalBitsWriter<6 /*encode only 6 bits at right*/, char> reader2;
+            char* decoded2 = reader2.read((unsigned char*)result.data(), 6 * 4, 32);
+
+            int i = 0;
+            Assert::AreEqual(one, decoded2[i++], L"Wrong decoded value.", LINE_INFO());
+            Assert::AreEqual(zero, decoded2[i++], L"Wrong decoded value.", LINE_INFO());
+            Assert::AreEqual(four, decoded2[i++], L"Wrong decoded value.", LINE_INFO());
+            Assert::AreEqual(five, decoded2[i++], L"Wrong decoded value.", LINE_INFO());
+            for (; i < 32; i++)
+                Assert::AreEqual(zero, decoded2[i], L"Wrong decoded value.", LINE_INFO());
+        }
+
+        TEST_METHOD(EncodingDecodingTest2)
+        {
+            // TODO: Your test code here
+
+            const char one_zero = '\xDF';  // 11011111
+            const char zero = '\x00'; // 00000000
+            const char four = '\x0F'; // 00001111
+            const char five = '\x1F'; // 00011111
+            const char six = '\x3F'; //  00111111
+
+            char data[] = { one_zero, zero, four, five };
+
+            VerticalBitsWriter<6 /*encode only 6 bits at right*/, char> writer;
+            for (size_t i = 0; i < 4 /*number of values to write*/; i++)
+            {
+                writer.write(data[i]);
+                /*
+
+                VerticalBits are alligned to ints, so it would have a form:
+
+                    1 2 | 3 4 5 6 7 8
+                    _ _ | _ _ _ _ _ _
+                V1: 1 1 | 0 1 1 1 1 1 //Values
+                V2: 0 0 | 0 0 0 0 0 0
+                V3: 0 0 | 0 0 1 1 1 1
+                V4: 0 0 | 0 1 1 1 1 1
+                    . . | . . . . . .
+                V32 0 0 | 0 0 0 0 0 0
+                ---------------------
+                   none | encoded values = 6
+                */
+            }
+
+            std::vector<unsigned int> result = writer.allocate();
+
+            Assert::AreEqual(6, (int)result.size(), L"Invalid target buffer length.", LINE_INFO());
+            /*
+            -2147483648: 10000000 00000000 00000000 00000000
+                      0: 00000000 00000000 00000000 00000000
+            -1879048192: 10010000 00000000 00000000 00000000
+            -1342177280: 10110000 00000000 00000000 00000000
+            */
+            Assert::AreEqual(0, (int)result[0], L"Wrong encoded value.", LINE_INFO());
+            Assert::AreEqual(-1879048192, (int)result[1], L"Wrong encoded value.", LINE_INFO());
+            Assert::AreEqual(-1342177280, (int)result[2], L"Wrong encoded value.", LINE_INFO());
+            Assert::AreEqual(-1342177280, (int)result[3], L"Wrong encoded value.", LINE_INFO());
+            Assert::AreEqual(-1342177280, (int)result[4], L"Wrong encoded value.", LINE_INFO());
+            Assert::AreEqual(-1342177280, (int)result[5], L"Wrong encoded value.", LINE_INFO());
+
+            // we coded lossy, so the resulting array should be different
+
+            VerticalBitsWriter<6 /*encode only 6 bits at right*/, char> reader;
+            char* decoded = reader.read((unsigned char*)result.data(), 6 * 4, 4);
+
+            Assert::AreEqual(five, decoded[0], L"Wrong decoded value.", LINE_INFO());
+            Assert::AreEqual(zero, decoded[1], L"Wrong decoded value.", LINE_INFO());
+            Assert::AreEqual(four, decoded[2], L"Wrong decoded value.", LINE_INFO());
+            Assert::AreEqual(five, decoded[3], L"Wrong decoded value.", LINE_INFO());
+
+            // just to test algorithm, since rest part are zeros, we can convert them to zeros as well
+            VerticalBitsWriter<6 /*encode only 6 bits at right*/, char> reader2;
+            char* decoded2 = reader2.read((unsigned char*)result.data(), 6 * 4, 32);
+
+            int i = 0;
+            Assert::AreEqual(five, decoded2[i++], L"Wrong decoded value.", LINE_INFO());
+            Assert::AreEqual(zero, decoded2[i++], L"Wrong decoded value.", LINE_INFO());
+            Assert::AreEqual(four, decoded2[i++], L"Wrong decoded value.", LINE_INFO());
+            Assert::AreEqual(five, decoded2[i++], L"Wrong decoded value.", LINE_INFO());
+            for (; i < 32; i++)
+                Assert::AreEqual(zero, decoded2[i], L"Wrong decoded value.", LINE_INFO());
         }
     };
 }

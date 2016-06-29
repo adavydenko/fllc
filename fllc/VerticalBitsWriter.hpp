@@ -70,7 +70,12 @@ T * VerticalBitsWriter<BitsCount, T>::read(unsigned char * input, int len, int p
             unsigned int currentBlock = blocks[sectorNum*blocksInSector + blockNum];
             currentBlock &= (1 << (32 - bitNum - 1));
             currentBlock >>= (32 - bitNum - 1);
-            currentBlock <<= sectorNum;
+            currentBlock <<= (BitsCount - sectorNum - 1);
+
+            if (sectorNum == 0 && currentBlock) // first symbol == 1
+            {
+                value |= (-1 << BitsCount); // in case BitsCount < sizeof(T), then fill 1with leading 1's
+            }
 
             value |= currentBlock;
         }
