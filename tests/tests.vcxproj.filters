@@ -41,6 +41,9 @@
     <ClCompile Include="VerticalBitsWriterTests.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="BitCompressorTests.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <Library Include="zdll.lib" />

@@ -168,6 +168,10 @@
     <ClInclude Include="targetver.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="BitCompressorTests.cpp">
+      <SubType>
+      </SubType>
+    </ClCompile>
     <ClCompile Include="DeltasCalculatorTests.cpp">
       <SubType>
       </SubType>

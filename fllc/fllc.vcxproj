@@ -159,6 +159,7 @@
   <ItemGroup>
     <ClInclude Include="..\include\zconf.h" />
     <ClInclude Include="..\include\zlib.h" />
+    <ClInclude Include="BitCompressor.h" />
     <ClInclude Include="DeltasCalculator.h" />
     <ClInclude Include="EngelsonFritzson.h" />
     <ClInclude Include="fllc.h" />
@@ -174,6 +175,7 @@
     <ClInclude Include="ZlibWrapper.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="BitCompressor.cpp" />
     <ClCompile Include="DeltasCalculator.cpp" />
     <ClCompile Include="EngelsonFritzson.cpp" />
     <ClCompile Include="fllc.cpp" />
