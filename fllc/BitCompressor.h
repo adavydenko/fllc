@@ -1,40 +1,49 @@
 #pragma once
+#include <queue>
+#include <vector>
+
 class BitCompressor
 {
     class Writer
     {
-        virtual void flush(const unsigned char& data) = 0;
-        virtual void write(const unsigned char& data) = 0;
+    public:
         virtual bool canWrite(const unsigned char& data) = 0;
+        virtual void write(const unsigned char& data) = 0;
+        virtual void flush(const unsigned char& data) = 0;
     };
 
-    class ZerosWriter :Writer {
-        const unsigned char zero = '0x00';
+    class ZerosOnesWriter :public Writer {
+
+        struct BitInfo {
+            const unsigned char symbol;
+            int bits;
+        };
+
+        std::vector<BitInfo> dataToWrite;
+
+    public:
+        static const unsigned char zeros;
+        static const unsigned char transitionsZerosOnes[8];
+        static const unsigned char ones;
+        static const unsigned char transitionsOnesZeros[8];
 
         // Inherited via Writer
-        virtual void flush(const unsigned char & data) override;
-        virtual void write(const unsigned char & data) override;
         virtual bool canWrite(const unsigned char & data) override;
+        virtual void write(const unsigned char & data) override;
+        virtual void flush(const unsigned char & data) override;
     };
-    class OnesWriter :Writer {
-        const unsigned char ones = '0xFF';
-        int totalBits;
 
-        OnesWriter() : totalBits(0) {}
+    class MixedWriter :public Writer {
+        // Inherited via Writer
+        virtual bool canWrite(const unsigned char & data) override;
+        virtual void write(const unsigned char & data) override;
+        virtual void flush(const unsigned char & data) override;
+    };
 
-        // Inherited via Writer
-        virtual void flush(const unsigned char & data) override;
-        virtual void write(const unsigned char & data) override;
-        virtual bool canWrite(const unsigned char & data) override;
-    };
-    class MixedWriter :Writer {
-        // Inherited via Writer
-        virtual void flush(const unsigned char & data) override;
-        virtual void write(const unsigned char & data) override;
-        virtual bool canWrite(const unsigned char & data) override;
-    };
+    std::queue<Writer*> writers;
 
     Writer* currentWriter;
+    Writer* getWriter(const unsigned char* data, size_t length);
 
 public:
     BitCompressor() :currentWriter(nullptr) {};
