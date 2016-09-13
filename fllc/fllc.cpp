@@ -13,6 +13,7 @@
 #include "SEMDeltas.h"
 #include "fllc.h"
 #include "ZlibWrapper.h"
+#include "BitCompressor.h"
 
 void printUsage(const char* cmd)
 {
@@ -21,6 +22,7 @@ void printUsage(const char* cmd)
     printf("                   -ef - EngelsonFritzson\n", cmd);
     printf("                   -sem - Separated Sign/Exponent/Mantissa\n", cmd);
     printf("                   -vb - Vertical Bits technique (=vf)\n", cmd);
+    printf("                   -bitcompression - compress bits by custom alorithm\n", cmd);
     printf("                   -zip - just zipping data\n", cmd);
     printf("-c (default), -d : defines whether file should be (c)ompressed of (d)ecompressed\n", cmd);
     printf("-l <points count>: specifies number of floats stored in the file\n", cmd);
@@ -139,6 +141,7 @@ int main(int argc, char* argv[])
     bool useVB = false;
     bool useSEM = false;
     bool useZip = false;
+    bool useBitCompression = false;
 
     if (argc < 7)
     {
@@ -170,6 +173,9 @@ int main(int argc, char* argv[])
         }
         else if (!strcmp(argv[i], "-zip")) {
             useZip = true;
+        }
+        else if (!strcmp(argv[i], "-bitcompression")) {
+            useBitCompression = true;
         }
         else if (!strcmp(argv[i], "-l")) {
             // We know the next argument *should* be the filename:
@@ -230,7 +236,49 @@ int main(int argc, char* argv[])
             unsigned char* data = zip.allocate(&size);
             saveCompressed(sourceFile, data, size, ".compressed.vf");
 
-            delete[] data;
+            unsigned char* data2zip = data;
+
+            if (useBitCompression)
+            {
+                BitCompressor zipper;
+
+                for (size_t i = 0; i < size; i++)
+                {
+                    zipper.write(&data2zip[i], 1);
+                }
+
+                int len = (int)zipper.bufferSize();
+                unsigned char * result = new unsigned char[len];
+                zipper.allocate(result, len);
+
+                saveCompressed(sourceFile, result, len, ".compressed.vf.bybits");
+
+                data2zip = result;
+                size = len;
+            }
+
+            if (useZip)
+            {
+                ZlibWrapper zipper;
+
+                int nLenDst = zipper.GetMaxCompressedLen(size);
+                BYTE* buffer = new BYTE[nLenDst];  // alloc dest buffer
+
+                int nLenPacked = zipper.CompressData(data2zip, size, buffer, nLenDst);
+                saveCompressed(sourceFile, buffer, nLenPacked, ".compressed.vf.zip");
+
+                delete[] buffer;
+            }
+
+            if (data != data2zip)
+            {
+                delete[] data;
+                delete[] data2zip;
+            }
+            else
+            {
+                delete[] data;
+            }
         }
 
         if (useZip)

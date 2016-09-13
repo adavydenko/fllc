@@ -61,6 +61,7 @@ unsigned char * VerticalFloat::allocate(int * count)
 
     int sizeInChars = noncompressed.size() * 4;
 
+
     ZlibWrapper zip;
 
     int nLenDst = zip.GetMaxCompressedLen(sizeInChars);
@@ -71,6 +72,13 @@ unsigned char * VerticalFloat::allocate(int * count)
 
     *count = nLenPacked;
     return buffer;
+
+    /*
+    *count = sizeInChars;
+    BYTE* result = new BYTE[sizeInChars];
+    memcpy(result, noncompressed.data(), sizeInChars);
+    return result;
+    */
 }
 
 _float * VerticalFloat::decompress(unsigned char * data, int dataSize, int pointsCount)
