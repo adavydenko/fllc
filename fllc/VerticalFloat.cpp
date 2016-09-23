@@ -45,23 +45,23 @@ unsigned char * VerticalFloat::allocate(int * count)
 {
     //v1.insert( v1.end(), v2.begin(), v2.end() );
 
-    std::vector<unsigned int> noncompressed;
+    std::vector<unsigned char> noncompressed;
 
-    std::vector<unsigned int> signs = signWriter.allocate();
+    std::vector<unsigned char> signs = signWriter.allocate();
     noncompressed.insert(noncompressed.end(),
         signs.begin(), signs.end());
 
-    std::vector<unsigned int> exponents = exponentWriter.allocate();
+    std::vector<unsigned char> exponents = exponentWriter.allocate();
     noncompressed.insert(noncompressed.end(),
         exponents.begin(), exponents.end());
 
-    std::vector<unsigned int> mantissas = mantissaWriter.allocate();
+    std::vector<unsigned char> mantissas = mantissaWriter.allocate();
     noncompressed.insert(noncompressed.end(),
         mantissas.begin(), mantissas.end());
 
-    int sizeInChars = noncompressed.size() * 4;
+    int sizeInChars = noncompressed.size();
 
-
+	/*
     ZlibWrapper zip;
 
     int nLenDst = zip.GetMaxCompressedLen(sizeInChars);
@@ -72,18 +72,19 @@ unsigned char * VerticalFloat::allocate(int * count)
 
     *count = nLenPacked;
     return buffer;
+	*/
 
-    /*
+    
     *count = sizeInChars;
     BYTE* result = new BYTE[sizeInChars];
     memcpy(result, noncompressed.data(), sizeInChars);
     return result;
-    */
+    
 }
 
 _float * VerticalFloat::decompress(unsigned char * data, int dataSize, int pointsCount)
 {
-    int blockSizeInt = (pointsCount % 32 == 0) ? (pointsCount / 32) : (pointsCount / 32 + 1);
+    int blockSizeInt = (pointsCount % 8 == 0) ? (pointsCount / 8) : (pointsCount / 8 + 1);
     int targetSize = (1 + 8 + 24) * 4 * blockSizeInt; // blockSize in ints
     BYTE* unpacked = new BYTE[targetSize];
 
@@ -92,15 +93,15 @@ _float * VerticalFloat::decompress(unsigned char * data, int dataSize, int point
 
     BYTE* current = unpacked;
 
-    int signBlockSize = 1 * blockSizeInt * 4;
+    int signBlockSize = 1 * blockSizeInt/* * 4*/;
     char* signs = signWriter.read(current, signBlockSize, pointsCount);
     current += signBlockSize;
 
-    int eSize = 8 * blockSizeInt * 4; // 8 - bits per 1 exponent
+    int eSize = 8 * blockSizeInt/* * 4*/; // 8 - bits per 1 exponent
     int* eDeltas = exponentWriter.read(current, eSize, pointsCount);
     current += eSize;
 
-    int mSize = 23 * blockSizeInt * 4;
+    int mSize = 23 * blockSizeInt/* * 4*/;
     int* mDeltas = mantissaWriter.read(current, mSize, pointsCount);
 
     delete[] unpacked;

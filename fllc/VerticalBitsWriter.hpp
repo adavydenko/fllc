@@ -6,11 +6,11 @@ template <int BitsCount, class T>
 class VerticalBitsWriter
 {
     VerticalBits bitContainer[BitsCount];
-    std::vector<unsigned int> buffer;
+    std::vector<unsigned char> buffer;
 
 public:
     void write(T& value);
-    std::vector<unsigned int>& allocate();
+    std::vector<unsigned char>& allocate();
     T* read(unsigned char* input, int len, int pointsCount);
 };
 
@@ -24,7 +24,7 @@ void VerticalBitsWriter<BitsCount, T>::write(T& value)
 }
 
 template<int BitsCount, class T>
-std::vector<unsigned int>& VerticalBitsWriter<BitsCount, T>::allocate()
+std::vector<unsigned char>& VerticalBitsWriter<BitsCount, T>::allocate()
 {
     buffer.clear();
 
@@ -43,7 +43,7 @@ T * VerticalBitsWriter<BitsCount, T>::read(unsigned char * input, int len, int p
 {
     //all sizes are in bits
     int sectors = BitsCount;
-    int blockSize = sizeof(unsigned int) * 8;
+    int blockSize = sizeof(unsigned char) * 8;
     int blocksInSector = len * 8 / (blockSize * sectors);
 
     int blocksInSector_verified = (pointsCount % blockSize == 0)
@@ -56,7 +56,7 @@ T * VerticalBitsWriter<BitsCount, T>::read(unsigned char * input, int len, int p
     }
 
     T* results = new T[pointsCount];
-    unsigned int * blocks = (unsigned int*)input;
+    unsigned char * blocks = (unsigned char*)input;
 
     for (size_t i = 0; i < pointsCount; i++)
     {
@@ -67,9 +67,9 @@ T * VerticalBitsWriter<BitsCount, T>::read(unsigned char * input, int len, int p
 
         for (size_t sectorNum = 0; sectorNum < BitsCount; sectorNum++)
         {
-            unsigned int currentBlock = blocks[sectorNum*blocksInSector + blockNum];
-            currentBlock &= (1 << (32 - bitNum - 1));
-            currentBlock >>= (32 - bitNum - 1);
+            unsigned char currentBlock = blocks[sectorNum*blocksInSector + blockNum];
+            currentBlock &= (1 << (8 - bitNum - 1));
+            currentBlock >>= (8 - bitNum - 1);
             currentBlock <<= (BitsCount - sectorNum - 1);
 
             if (sectorNum == 0 && currentBlock) // first symbol == 1

@@ -22,7 +22,8 @@ namespace tests
                 writer.write(zero);
                 /*
 
-                VerticalBits are alligned to ints, so it would have a form:
+                --VerticalBits are alligned to ints, so it would have a form:
+				VerticalBits are alligned to chars, so it would have a form:
 
                     1 2 3 4 5 6 7 8
                     _ _ _ _ _ _ _ _
@@ -39,7 +40,7 @@ namespace tests
                 */
             }
 
-            std::vector<unsigned int> result = writer.allocate();
+            std::vector<unsigned char> result = writer.allocate();
 
             Assert::AreEqual(8, (int)result.size(), L"Invalid target buffer length.", LINE_INFO());
             Assert::AreEqual(0, (int)result[0], L"Zero is expected.", LINE_INFO());
@@ -68,7 +69,7 @@ namespace tests
                 */
             }
 
-            std::vector<unsigned int> result = writer.allocate();
+            std::vector<unsigned char> result = writer.allocate();
 
             Assert::AreEqual(8, (int)result.size(), L"Invalid target buffer length.", LINE_INFO());
             for (size_t i = 0; i < 8; i++)
@@ -105,7 +106,7 @@ namespace tests
                 */
             }
 
-            std::vector<unsigned int> result = writer.allocate();
+            std::vector<unsigned char> result = writer.allocate();
 
             Assert::AreEqual(8, (int)result.size(), L"Invalid target buffer length.", LINE_INFO());
             for (size_t i = 0; i < 8; i++)
@@ -315,7 +316,7 @@ namespace tests
                 */
             }
 
-            std::vector<unsigned int> result = writer.allocate();
+            std::vector<unsigned char> result = writer.allocate();
 
             Assert::AreEqual(6, (int)result.size(), L"Invalid target buffer length.", LINE_INFO());
             /*
@@ -386,7 +387,7 @@ namespace tests
                 */
             }
 
-            std::vector<unsigned int> result = writer.allocate();
+            std::vector<unsigned char> result = writer.allocate();
 
             Assert::AreEqual(6, (int)result.size(), L"Invalid target buffer length.", LINE_INFO());
             /*

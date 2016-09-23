@@ -4,15 +4,15 @@
 class VerticalBits
 {
     int usedBits;
-    unsigned int* currentBlock;
+    unsigned char* currentBlock;
 
 public:
-    std::vector<unsigned int> block;
+    std::vector<unsigned char> block;
 
     VerticalBits();
     void add(unsigned int data, int bitNum);
     void add(bool data);
-    unsigned int* allocate(int* count); //don't use unsigned chars, just to minimize allocation
+    unsigned char* allocate(int* count); //don't use unsigned chars, just to minimize allocation
     void flush();
 };
 
