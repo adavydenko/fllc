@@ -8,7 +8,7 @@
 #include "structs.h"
 #include "EngelsonFritzson.h"
 #include "DeltasCalculator.h"
-#include "VerticalBits.h"
+#include "VerticalBits.hpp"
 #include "VerticalFloat.h"
 #include "SEMDeltas.h"
 #include "fllc.h"

@@ -85,13 +85,18 @@ unsigned char * VerticalFloat::allocate(int * count)
 _float * VerticalFloat::decompress(unsigned char * data, int dataSize, int pointsCount)
 {
     int blockSizeInt = (pointsCount % 8 == 0) ? (pointsCount / 8) : (pointsCount / 8 + 1);
-    int targetSize = (1 + 8 + 24) * 4 * blockSizeInt; // blockSize in ints
-    BYTE* unpacked = new BYTE[targetSize];
+    int targetSize = (1 + 8 + 23) /* * 4*/ * blockSizeInt; // blockSize in ints
+    
+	/*
+	BYTE* unpacked = new BYTE[targetSize];
 
     ZlibWrapper zip;
     int nLen = zip.UncompressData(data, dataSize, unpacked, targetSize);
 
     BYTE* current = unpacked;
+	*/
+
+	BYTE* current = data;
 
     int signBlockSize = 1 * blockSizeInt/* * 4*/;
     char* signs = signWriter.read(current, signBlockSize, pointsCount);
@@ -104,7 +109,7 @@ _float * VerticalFloat::decompress(unsigned char * data, int dataSize, int point
     int mSize = 23 * blockSizeInt/* * 4*/;
     int* mDeltas = mantissaWriter.read(current, mSize, pointsCount);
 
-    delete[] unpacked;
+    //delete[] unpacked;
 
     int* e = new int[pointsCount]; // resulting exponent
     int* m = new int[pointsCount]; // resulting mantissa

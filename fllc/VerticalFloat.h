@@ -1,14 +1,14 @@
 #pragma once
 #include "structs.h"
-#include "VerticalBits.h"
+#include "VerticalBits.hpp"
 #include "VerticalBitsWriter.hpp"
 
 class VerticalFloat
 {
 public:
-    VerticalBits sBits;     //bits for storing float's sign
-    VerticalBits eBits[8];  //bits to store float's exponent
-    VerticalBits mBits[24]; //bits to store float's mantissa
+    VerticalBits<char> sBits;     //bits for storing float's sign
+    VerticalBits<int> eBits[8];  //bits to store float's exponent
+    VerticalBits<int> mBits[24]; //bits to store float's mantissa
 
     VerticalBitsWriter<1, char> signWriter;
     VerticalBitsWriter<8, int> exponentWriter;
