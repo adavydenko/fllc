@@ -6,6 +6,7 @@
 #include "VerticalFloat.h"
 #include <vector>
 #include "ZlibWrapper.h"
+#include "ZstdWrapper.h"
 
 void VerticalFloat::compress(_float * nir, int count)
 {
@@ -43,8 +44,6 @@ void VerticalFloat::compress(_float * nir, int count)
 
 unsigned char * VerticalFloat::allocate(int * count)
 {
-    //v1.insert( v1.end(), v2.begin(), v2.end() );
-
     std::vector<unsigned char> noncompressed;
 
     std::vector<unsigned char> signs = signWriter.allocate();
@@ -61,25 +60,23 @@ unsigned char * VerticalFloat::allocate(int * count)
 
     int sizeInChars = noncompressed.size();
 
-	/*
-    ZlibWrapper zip;
+    ZstdWrapper zip;
 
     int nLenDst = zip.GetMaxCompressedLen(sizeInChars);
     BYTE* buffer = new BYTE[nLenDst];  // alloc dest buffer
 
-    int nLenPacked = zip.CompressData((const BYTE*)noncompressed.data(), sizeInChars, buffer, nLenDst);
+    int nLenPacked = zip.CompressData((const BYTE*)noncompressed.data(), sizeInChars, buffer, nLenDst, COMPRESSION_RATIO);
     if (nLenPacked == -1) return nullptr;
 
     *count = nLenPacked;
     return buffer;
-	*/
-
     
+    /*
     *count = sizeInChars;
     BYTE* result = new BYTE[sizeInChars];
     memcpy(result, noncompressed.data(), sizeInChars);
     return result;
-    
+    */
 }
 
 _float * VerticalFloat::decompress(unsigned char * data, int dataSize, int pointsCount)
@@ -87,16 +84,17 @@ _float * VerticalFloat::decompress(unsigned char * data, int dataSize, int point
     int blockSizeInt = (pointsCount % 8 == 0) ? (pointsCount / 8) : (pointsCount / 8 + 1);
     int targetSize = (1 + 8 + 23) /* * 4*/ * blockSizeInt; // blockSize in ints
     
-	/*
+	
 	BYTE* unpacked = new BYTE[targetSize];
 
-    ZlibWrapper zip;
+    ZstdWrapper zip;
     int nLen = zip.UncompressData(data, dataSize, unpacked, targetSize);
 
     BYTE* current = unpacked;
-	*/
-
+	
+    /*
 	BYTE* current = data;
+    */
 
     int signBlockSize = 1 * blockSizeInt/* * 4*/;
     char* signs = signWriter.read(current, signBlockSize, pointsCount);

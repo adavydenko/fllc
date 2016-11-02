@@ -170,9 +170,12 @@
     <ClInclude Include="VerticalBits.hpp" />
     <ClInclude Include="VerticalBitsWriter.hpp" />
     <ClInclude Include="VerticalFloat.h" />
+    <ClInclude Include="VerticalFloatUINT.h" />
     <ClInclude Include="zconf.h" />
     <ClInclude Include="zlib.h" />
     <ClInclude Include="ZlibWrapper.h" />
+    <ClInclude Include="zstd.h" />
+    <ClInclude Include="ZstdWrapper.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="BitCompressor.cpp" />
@@ -187,13 +190,17 @@
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Create</PrecompiledHeader>
     </ClCompile>
     <ClCompile Include="VerticalFloat.cpp" />
+    <ClCompile Include="VerticalFloatUINT.cpp" />
     <ClCompile Include="ZlibWrapper.cpp" />
+    <ClCompile Include="ZstdWrapper.cpp" />
   </ItemGroup>
   <ItemGroup>
     <Library Include="Debug\zdll.lib" />
+    <Library Include="Debug\zstdlib_x86.lib" />
   </ItemGroup>
   <ItemGroup>
     <None Include="Debug\zlib.def" />
+    <None Include="Debug\zstdlib_x86.exp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

@@ -44,12 +44,22 @@
     <ClCompile Include="BitCompressorTests.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="ZstdWrapperTests.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <Library Include="zdll.lib" />
+    <Library Include="zstdlib_x86.lib" />
   </ItemGroup>
   <ItemGroup>
     <None Include="zlib.def">
+      <Filter>Source Files</Filter>
+    </None>
+    <None Include="zstdlib_x86.exp">
+      <Filter>Source Files</Filter>
+    </None>
+    <None Include="zstdlib_x86.dll">
       <Filter>Source Files</Filter>
     </None>
   </ItemGroup>

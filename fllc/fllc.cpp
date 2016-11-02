@@ -10,6 +10,7 @@
 #include "DeltasCalculator.h"
 #include "VerticalBits.hpp"
 #include "VerticalFloat.h"
+#include "VerticalFloatUINT.h"
 #include "SEMDeltas.h"
 #include "fllc.h"
 #include "ZlibWrapper.h"
@@ -22,6 +23,7 @@ void printUsage(const char* cmd)
     printf("                   -ef - EngelsonFritzson\n", cmd);
     printf("                   -sem - Separated Sign/Exponent/Mantissa\n", cmd);
     printf("                   -vb - Vertical Bits technique (=vf)\n", cmd);
+    printf("                   -vb2 - Vertical Bits technique with UINT carrier (=vf)\n", cmd);
     printf("                   -bitcompression - compress bits by custom alorithm\n", cmd);
     printf("                   -zip - just zipping data\n", cmd);
     printf("-c (default), -d : defines whether file should be (c)ompressed of (d)ecompressed\n", cmd);
@@ -29,8 +31,8 @@ void printUsage(const char* cmd)
     printf("-file <file name>: specifies file name with uncompressed (should contain text) or compressed data (should be binary)\n", cmd);
     printf("[-save]          : optional, specified whether output data should be saved on disk or not\n", cmd);
 
-    printf("\nExample (of compression): fllc -ef -c -l 4200 -f \"da1650_nir.txt\" -save\n", cmd);
-    printf("Example (of decompression): fllc -ef -d -l 4200 -f \"da1650_nir.compressed\" -save\n", cmd);
+    printf("\nExample (of compression): fllc -ef -c -l 4200 -file \"da1650_nir.txt\" -save\n", cmd);
+    printf("Example (of decompression): fllc -ef -d -l 4200 -file \"da1650_nir.compressed\" -save\n", cmd);
 }
 
 //TODO: preallocate buffer for results
@@ -139,11 +141,12 @@ int main(int argc, char* argv[])
 
     bool useEF = false;
     bool useVB = false;
+    bool useVB2 = false;
     bool useSEM = false;
     bool useZip = false;
     bool useBitCompression = false;
 
-    if (argc < 7)
+    if (argc < 8)
     {
         printUsage(argv[0]);
         return 0;
@@ -167,6 +170,9 @@ int main(int argc, char* argv[])
         }
         else if (!strcmp(argv[i], "-vb")) {
             useVB = true;
+        }
+        else if (!strcmp(argv[i], "-vb2")) {
+            useVB2 = true;
         }
         else if (!strcmp(argv[i], "-sem")) {
             useSEM = true;
@@ -236,8 +242,10 @@ int main(int argc, char* argv[])
             unsigned char* data = zip.allocate(&size);
             saveCompressed(sourceFile, data, size, ".compressed.vf");
 
-            unsigned char* data2zip = data;
+            delete[] data;
 
+
+            /*
             if (useBitCompression)
             {
                 BitCompressor zipper;
@@ -256,7 +264,9 @@ int main(int argc, char* argv[])
                 data2zip = result;
                 size = len;
             }
+            */
 
+            /*
             if (useZip)
             {
                 ZlibWrapper zipper;
@@ -279,6 +289,19 @@ int main(int argc, char* argv[])
             {
                 delete[] data;
             }
+            */
+        }
+
+        if (useVB2)
+        {
+            VerticalFloatUINT zip;
+            zip.compress(nir, pointsCount);
+
+            int size(0);
+            unsigned char* data = zip.allocate(&size);
+            saveCompressed(sourceFile, data, size, ".compressed.vfuint");
+
+            delete[] data;
         }
 
         if (useZip)
@@ -333,6 +356,20 @@ int main(int argc, char* argv[])
             std::vector<char>* zip = readEfFile(sourceFile, size);
 
             VerticalFloat compressor;
+            _float* results = compressor.decompress((unsigned char*)zip->data(), size, pointsCount);
+
+            saveCompressed(sourceFile, (unsigned char*)results, pointsCount * 4, ".decompressed");
+
+            delete zip;
+            delete[] results;
+        }
+
+        if (useVB2)
+        {
+            int size;
+            std::vector<char>* zip = readEfFile(sourceFile, size);
+
+            VerticalFloatUINT compressor;
             _float* results = compressor.decompress((unsigned char*)zip->data(), size, pointsCount);
 
             saveCompressed(sourceFile, (unsigned char*)results, pointsCount * 4, ".decompressed");
@@ -416,6 +453,27 @@ extern unsigned char * compressVF(_float * nir, int count, int * compressedSize)
 extern unsigned char* decompressVF(unsigned char * zip, int size, int count)
 {
     VerticalFloat vf;
+
+    int* unpacked = (int*)vf.decompress(zip, size, count);
+
+    return (unsigned char*)unpacked;
+}
+
+extern unsigned char * compressVF_UINT(_float * nir, int count, int * compressedSize)
+{
+    VerticalFloatUINT zip;
+    zip.compress(nir, count);
+
+    int size(0);
+    unsigned char* data = zip.allocate(&size);
+    *compressedSize = size;
+
+    return (unsigned char*)data;
+}
+
+extern unsigned char* decompressVF_UINT(unsigned char * zip, int size, int count)
+{
+    VerticalFloatUINT vf;
 
     int* unpacked = (int*)vf.decompress(zip, size, count);
 

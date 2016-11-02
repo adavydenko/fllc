@@ -60,8 +60,19 @@
     <ClInclude Include="BitCompressor.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="ZlibWrapper.h" />
     <ClInclude Include="VerticalBits.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="ZstdWrapper.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="ZlibWrapper.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="zstd.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="VerticalFloatUINT.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
@@ -90,13 +101,21 @@
     <ClCompile Include="BitCompressor.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="ZstdWrapper.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="VerticalFloatUINT.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <Library Include="Debug\zdll.lib" />
+    <Library Include="Debug\zstdlib_x86.lib" />
   </ItemGroup>
   <ItemGroup>
     <None Include="Debug\zlib.def">
       <Filter>Source Files</Filter>
     </None>
+    <None Include="Debug\zstdlib_x86.exp" />
   </ItemGroup>
 </Project>

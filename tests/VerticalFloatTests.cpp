@@ -2,6 +2,7 @@
 #include "CppUnitTest.h"
 #include "..\fllc\structs.h"
 #include "..\fllc\VerticalFloat.cpp"
+#include "..\fllc\VerticalFloatUINT.cpp"
 #include "..\fllc\VerticalBits.hpp"
 #include "..\fllc\ZlibWrapper.cpp"
 
@@ -25,6 +26,26 @@ namespace tests
             unsigned char* zip = compressor.allocate(&size);
 
             VerticalFloat decompressor;
+            float* unpacked = (float*)decompressor.decompress(zip, size, 5);
+            for (size_t i = 0; i < 5; i++)
+            {
+                Assert::AreEqual(x[i], unpacked[i], 0.000001f, L"Invalid decompressed value.", LINE_INFO());
+            }
+        }
+
+        TEST_METHOD(BasicFloatTestUINT)
+        {
+            // TODO: Your test code here
+
+            float x[5] = { 100.0f, 200.0f, 250.0f, 260.0f, 405.0f };
+
+            VerticalFloatUINT compressor;
+            compressor.compress((_float*)x, 5);
+
+            int size;
+            unsigned char* zip = compressor.allocate(&size);
+
+            VerticalFloatUINT decompressor;
             float* unpacked = (float*)decompressor.decompress(zip, size, 5);
             for (size_t i = 0; i < 5; i++)
             {
@@ -186,6 +207,185 @@ namespace tests
             for (size_t i = 0; i < 8; i++)
             {
                 Assert::AreEqual(x[i], unpacked[i], L"Invalid decompressed value.", LINE_INFO());
+            }
+
+            delete[] unpacked;
+        }
+
+        TEST_METHOD(Ds2500TestUINT)
+        {
+            // DS2500
+            int x[] =
+            {
+                0x3EB08E1B,
+                0x3EB21199,
+                0x3EB3674A,
+                0x3EB49E31,
+                0x3EB5B16D,
+                0x3EB6A381,
+                0x3EB77764,
+                0x3EB82170
+            };
+
+            VerticalFloatUINT sd;
+            sd.compress((_float*)x, 8);
+
+            int size;
+            unsigned char* zip = sd.allocate(&size);
+
+            int* unpacked = new int[8];
+            unpacked = (int*)sd.decompress(zip, size, 8);
+            for (size_t i = 0; i < 8; i++)
+            {
+                Assert::AreEqual(x[i], unpacked[i], L"Invalid decompressed value.", LINE_INFO());
+            }
+
+            delete[] unpacked;
+        }
+
+        TEST_METHOD(MaxRangeTest)
+        {
+            const int N = 14;
+            unsigned int x[N] =
+            {
+                0x00000000, // this will produce zeros in 1st, 2nd & 3rd deltas
+                0x00000000,
+                0x00000000,
+                0x00000000,
+
+                0x7FFFFFFF, // int.Max: 2 147 483 647
+                0x80000001, // int.Min: -2 147 483 647
+                0x7FFFFFFF,
+                0x80000001,
+                0x7FFFFFFF,
+                0x80000001,
+                0x7FFFFFFF,
+                0x80000001,
+                0x7FFFFFFF,
+                0x80000001,
+            };
+
+            VerticalFloat sd;
+            sd.compress((_float*)x, N);
+
+            int size;
+            unsigned char* zip = sd.allocate(&size);
+
+            _float * unpacked = new _float[14];
+            VerticalFloat decompressor;
+            unpacked = decompressor.decompress(zip, size, N);
+            for (size_t i = 0; i < N; i++)
+            {
+                Assert::AreEqual(x[i], unpacked[i]._value, L"Invalid decompressed value.", LINE_INFO());
+            }
+
+            delete[] unpacked;
+        }
+
+        TEST_METHOD(MaxRangeTestUINT)
+        {
+            const int N = 14;
+            unsigned int x[N] =
+            {
+                0x00000000, // this will produce zeros in 1st, 2nd & 3rd deltas
+                0x00000000,
+                0x00000000,
+                0x00000000,
+
+                0x7FFFFFFF, // int.Max: 2 147 483 647
+                0x80000001, // int.Min: -2 147 483 647
+                0x7FFFFFFF,
+                0x80000001,
+                0x7FFFFFFF,
+                0x80000001,
+                0x7FFFFFFF,
+                0x80000001,
+                0x7FFFFFFF,
+                0x80000001,
+            };
+
+            VerticalFloatUINT sd;
+            sd.compress((_float*)x, N);
+
+            int size;
+            unsigned char* zip = sd.allocate(&size);
+
+            _float * unpacked = new _float[14];
+            VerticalFloatUINT decompressor;
+            unpacked = decompressor.decompress(zip, size, N);
+            for (size_t i = 0; i < N; i++)
+            {
+                Assert::AreEqual(x[i], unpacked[i]._value, L"Invalid decompressed value.", LINE_INFO());
+            }
+
+            delete[] unpacked;
+        }
+
+        TEST_METHOD(RangeTest)
+        {
+            const int N = 10;
+            unsigned int x[N] =
+            {
+                0x00000000, // this will produce zeros in 1st, 2nd & 3rd deltas
+                0x00000000,
+                0x00000000,
+                0x00000000,
+
+                0xFFFFFFFF,
+                0x00000000,
+                0xFFFFFFFF,
+                0x00000000,
+                0xFFFFFFFF,
+                0x00000000,
+            };
+
+            VerticalFloat sd;
+            sd.compress((_float*)x, N);
+
+            int size;
+            unsigned char* zip = sd.allocate(&size);
+
+            _float * unpacked = new _float[14];
+            VerticalFloat decompressor;
+            unpacked = decompressor.decompress(zip, size, N);
+            for (size_t i = 0; i < N; i++)
+            {
+                Assert::AreEqual(x[i], unpacked[i]._value, L"Invalid decompressed value.", LINE_INFO());
+            }
+
+            delete[] unpacked;
+        }
+
+        TEST_METHOD(RangeTestUINT)
+        {
+            const int N = 10;
+            unsigned int x[N] =
+            {
+                0x00000000, // this will produce zeros in 1st, 2nd & 3rd deltas
+                0x00000000,
+                0x00000000,
+                0x00000000,
+
+                0xFFFFFFFF,
+                0x00000000,
+                0xFFFFFFFF,
+                0x00000000,
+                0xFFFFFFFF,
+                0x00000000,
+            };
+
+            VerticalFloatUINT sd;
+            sd.compress((_float*)x, N);
+
+            int size;
+            unsigned char* zip = sd.allocate(&size);
+
+            _float * unpacked = new _float[14];
+            VerticalFloatUINT decompressor;
+            unpacked = decompressor.decompress(zip, size, N);
+            for (size_t i = 0; i < N; i++)
+            {
+                Assert::AreEqual(x[i], unpacked[i]._value, L"Invalid decompressed value.", LINE_INFO());
             }
 
             delete[] unpacked;

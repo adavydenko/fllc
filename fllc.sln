@@ -1,7 +1,7 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio 14
-VisualStudioVersion = 14.0.25123.0
+VisualStudioVersion = 14.0.25420.1
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "fllc", "fllc\fllc.vcxproj", "{D9287360-64A4-4AEB-B929-EE5EC328D9B5}"
 EndProject
@@ -18,6 +18,8 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "lib", "lib", "{EEA1DCBE-E6F
 	ProjectSection(SolutionItems) = preProject
 		lib\zdll.lib = lib\zdll.lib
 		lib\zlib.def = lib\zlib.def
+		lib\zstdlib_x86.exp = lib\zstdlib_x86.exp
+		lib\zstdlib_x86.lib = lib\zstdlib_x86.lib
 	EndProjectSection
 EndProject
 Global

@@ -1,6 +1,7 @@
 #include "stdafx.h"
 #include "DeltasCalculator.h"
 
+/*
 template<class T, int Order>
 inline void DeltasCalculator<T, Order>::getDeltas(T * originalArray, int count, T * targetBuffer)
 {
@@ -54,3 +55,4 @@ inline void DeltasCalculator<T, Order>::getOriginal(T * deltasArray, int count, 
         }
     }
 }
+*/
